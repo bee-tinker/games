@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>피젯</title>
+<style>
+  :root{--bg:#1b1f2a;--ink:#e8ecf5;--panel:#262c3b;--a:#4dd0e1;--b:#ff7043}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;touch-action:none}
+  body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;padding:16px;overflow:hidden}
+  .tabs{display:flex;gap:8px;margin-bottom:10px}
+  .tabs button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:8px 20px;background:var(--panel);color:var(--ink);cursor:pointer}
+  .tabs button.on{background:var(--a);color:#06303a}
+  .stat{display:flex;gap:10px;margin:6px 0}
+  .stat div{background:var(--panel);border-radius:12px;padding:8px 14px;text-align:center;font-size:12px;min-width:92px}
+  .stat b{display:block;font-size:22px}
+  #stage{position:relative;width:min(88vw,340px);height:min(88vw,340px);display:flex;align-items:center;justify-content:center;margin:10px 0}
+  #spinner{width:100%;height:100%;will-change:transform}
+  #key{display:none;width:70%;height:70%;position:relative}
+  #key .base{position:absolute;inset:0;border-radius:22px;background:#0f121a;box-shadow:0 0 0 4px #2b3244}
+  #key .cap{position:absolute;left:6%;right:6%;top:4%;bottom:14%;border-radius:18px;
+    background:linear-gradient(#f4f6fb,#cfd5e4);box-shadow:0 14px 0 #8d96ad,0 18px 18px rgba(0,0,0,.5);
+    display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:900;color:#454d66;transition:transform .06s,box-shadow .06s}
+  #key.down .cap{transform:translateY(12px);box-shadow:0 2px 0 #8d96ad,0 4px 8px rgba(0,0,0,.5)}
+  #hint{font-size:13px;opacity:.7;height:20px}
+  #combo{height:26px;font-weight:900;font-size:18px;color:var(--b)}
+  .pop{position:fixed;font-weight:900;font-size:22px;color:var(--a);pointer-events:none;animation:up .6s forwards}
+  @keyframes up{to{transform:translateY(-60px);opacity:0}}
+</style>
+</head>
+<body>
+<div class="tabs"><button id="t1" class="on">🌀 스피너</button><button id="t2">⌨️ 키캡</button></div>
+<div class="stat"><div id="l1">회전수<b id="v1">0</b></div><div>최고 속도<b id="v2">0</b></div></div>
+<div id="stage">
+  <svg id="spinner" viewBox="-100 -100 200 200">
+    <defs><radialGradient id="g" cx="50%" cy="40%"><stop offset="0" stop-color="#7fe9f7"/><stop offset="1" stop-color="#1ea5bd"/></radialGradient></defs>
+    <g id="sp">
+      <g id="lobes"></g>
+      <circle r="26" fill="#2b3244"/><circle r="17" fill="#cfd5e4"/><circle r="8" fill="#2b3244"/>
+    </g>
+  </svg>
+  <div id="key"><div class="base"></div><div class="cap" id="cap">A</div></div>
+</div>
+<div id="combo"></div>
+<div id="hint">손가락으로 돌리고 튕겨 보세요</div>
+
+<script>
+const $=id=>document.getElementById(id);
+// ---- 오디오 (첫 터치 때 생성)
+let ac;
+function audio(){if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(ac&&ac.state==='suspended')ac.resume();return ac}
+function tone(f,d,type,vol,slide){
+  const c=audio();if(!c)return;const t=c.currentTime,o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f*slide),t+d);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(c.destination);o.start(t);o.stop(t+d);
+}
+function noise(d,vol,hp){
+  const c=audio();if(!c)return;const n=c.sampleRate*d|0,b=c.createBuffer(1,n,c.sampleRate),a=b.getChannelData(0);
+  for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*(1-i/n);
+  const s=c.createBufferSource(),g=c.createGain(),f=c.createBiquadFilter();f.type='highpass';f.frequency.value=hp;
+  g.gain.value=vol;s.buffer=b;s.connect(f).connect(g).connect(c.destination);s.start();
+}
+const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
+
+// ---- 스피너
+const lobes=$('lobes'),sp=$('sp');
+for(let i=0;i<3;i++){
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('transform','rotate('+i*120+')');
+  g.innerHTML='<path d="M-16 -18 L-24 -62 A30 30 0 0 1 24 -62 L16 -18 Z" fill="url(#g)"/><circle cx="0" cy="-62" r="14" fill="#1b1f2a"/><circle cx="0" cy="-62" r="9" fill="#cfd5e4"/>';
+  lobes.appendChild(g);
+}
+let ang=0,vel=0,drag=false,lastA=0,lastT=0,total=0,maxV=0,lastTick=0,mode=1;
+const center=()=>{const r=$('spinner').getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]};
+const pa=e=>{const[cx,cy]=center();return Math.atan2(e.clientY-cy,e.clientX-cx)*180/Math.PI};
+function norm(d){while(d>180)d-=360;while(d<-180)d+=360;return d}
+$('stage').addEventListener('pointerdown',e=>{
+  audio();
+  if(mode===2){keyDown();return}
+  drag=true;lastA=pa(e);lastT=performance.now();vel=0;$('stage').setPointerCapture(e.pointerId);
+});
+$('stage').addEventListener('pointermove',e=>{
+  if(mode!==1||!drag)return;
+  const a=pa(e),t=performance.now(),d=norm(a-lastA),dt=Math.max(1,t-lastT);
+  ang+=d;vel=d/dt*16;lastA=a;lastT=t;
+});
+addEventListener('pointerup',()=>{if(mode===2)keyUp();drag=false});
+let prev=performance.now();
+function frame(now){
+  const dt=Math.min(40,now-prev)/16;prev=now;
+  if(mode===1){
+    if(!drag){ang+=vel*dt;vel*=Math.pow(.992,dt);if(Math.abs(vel)<.05)vel=0}
+    else if(now-lastT>60)vel*=.8;
+    sp.setAttribute('transform','rotate('+ang+')');
+    // 120도(날개 하나)마다 틱
+    const tick=Math.floor(ang/120);
+    if(tick!==lastTick){
+      const sp_=Math.abs(vel);
+      tone(500+Math.min(sp_,40)*18,.05,'square',.04+Math.min(sp_,30)*.002,.6);
+      if(sp_>6)buzz(8);
+      total+=Math.abs(tick-lastTick)/3;lastTick=tick;
+      $('v1').textContent=Math.floor(total);
+    }
+    const dps=Math.abs(vel)*60/360*60; // 분당 회전수(rpm)
+    if(dps>maxV){maxV=dps;$('v2').textContent=Math.round(maxV)+' rpm'}
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// ---- 키캡
+let presses=0,combo=0,lastP=0,isDown=false;
+const letters='ASDFGHJKL'.split('');
+function keyDown(){
+  if(isDown)return;isDown=true;$('key').classList.add('down');
+  noise(.05,.5,1500);tone(180,.08,'sine',.5,.5);tone(1200,.03,'square',.05);buzz(15);
+  const now=performance.now();combo=(now-lastP<500)?combo+1:1;lastP=now;presses++;
+  $('v1').textContent=presses;
+  $('combo').textContent=combo>=5?'🔥 콤보 x'+combo:'';
+  $('cap').textContent=letters[presses%letters.length];
+}
+function keyUp(){
+  if(!isDown)return;isDown=false;$('key').classList.remove('down');
+  noise(.03,.25,3500);tone(900,.04,'triangle',.12,.7);
+}
+addEventListener('keydown',e=>{if(mode===2&&!e.repeat){audio();keyDown()}});
+addEventListener('keyup',()=>{if(mode===2)keyUp()});
+setInterval(()=>{if(mode===2&&performance.now()-lastP>1500)combo=0,$('combo').textContent=''},300);
+
+// ---- 탭 전환
+function setMode(m){
+  mode=m;$('t1').classList.toggle('on',m===1);$('t2').classList.toggle('on',m===2);
+  $('spinner').style.display=m===1?'block':'none';$('key').style.display=m===2?'block':'none';
+  $('l1').firstChild.textContent=m===1?'회전수':'누른 횟수';
+  $('v1').textContent=m===1?Math.floor(total):presses;
+  $('v2').parentNode.style.display=m===1?'block':'none';
+  $('combo').textContent='';
+  $('hint').textContent=m===1?'손가락으로 돌리고 튕겨 보세요':'눌러 보세요 (키보드 아무 키도 가능)';
+}
+$('t1').onclick=()=>setMode(1);$('t2').onclick=()=>setMode(2);
+</script>
+</body>
+</html>
