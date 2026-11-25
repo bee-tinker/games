@@ -533,18 +533,18 @@ SCN.g_bike=function(t,ph){ph=ph||0;var a=ph*2*Math.PI,c=[94,112],r=11,pn=[c[0]+r
 function fLimb(a,b,wa,wb,c){return limb(a,b,wa,wb,wa*0.55,wa*0.55,0.4,c)}
 function outerIK(S,H){var a=ik(S,H,PL.u,PL.f,1),b=ik(S,H,PL.u,PL.f,-1);return Math.abs(a[0][0]-80)>=Math.abs(b[0][0]-80)?a:b}
 function frontPerson(o,m,u){
-  var NC='var(--p-skin)',has=function(k){return m.indexOf(k)>=0},h='',red='';
-  h+='<path d="M63 59 C63 54 70 51 80 51 C90 51 97 54 97 59 L96 70 C94 80 90 86 89 92 C92 96 92 100 88 103 L72 103 C68 100 68 96 71 92 C70 86 66 80 64 70 Z" fill="'+NC+'"/>';
-  h+='<path d="M76 40 L84 40 L85 53 L75 53 Z" fill="'+NC+'"/><ellipse cx="80" cy="40" rx="7.5" ry="8.6" fill="'+NC+'"/>';
-  if(has('chest'))red+='<path d="M66 61 Q71 72 80 70 L80 59 Q72 57 66 61 Z"/><path d="M94 61 Q89 72 80 70 L80 59 Q88 57 94 61 Z"/>';
-  if(has('lats'))red+='<path d="M65 67 Q60 81 71 93 Q71 80 65 67 Z"/><path d="M95 67 Q100 81 89 93 Q89 80 95 67 Z"/>';
-  [[0,-1],[1,1]].forEach(function(sd){var i=sd[0],sx=sd[1],H=[80+sx*8,100],K=o.knees[i],A=o.ankles[i];
+  var NC='var(--p-skin)',has=function(k){return m.indexOf(k)>=0},h='',red='',dy=o.dy||0,hy=o.hipY||100,tr='<g transform="translate(0 '+dy.toFixed(1)+')">';
+  h+=tr+'<path d="M63 59 C63 54 70 51 80 51 C90 51 97 54 97 59 L96 70 C94 80 90 86 89 92 C92 96 92 100 88 103 L72 103 C68 100 68 96 71 92 C70 86 66 80 64 70 Z" fill="'+NC+'"/>';
+  h+='<path d="M76 40 L84 40 L85 53 L75 53 Z" fill="'+NC+'"/><ellipse cx="80" cy="40" rx="7.5" ry="8.6" fill="'+NC+'"/></g>';var tred='';
+  if(has('chest'))tred+='<path d="M66 61 Q71 72 80 70 L80 59 Q72 57 66 61 Z"/><path d="M94 61 Q89 72 80 70 L80 59 Q88 57 94 61 Z"/>';
+  if(has('lats'))tred+='<path d="M65 67 Q60 81 71 93 Q71 80 65 67 Z"/><path d="M95 67 Q100 81 89 93 Q89 80 95 67 Z"/>';
+  [[0,-1],[1,1]].forEach(function(sd){var i=sd[0],sx=sd[1],H=[80+sx*8,hy],K=o.knees[i],A=o.ankles[i];
     h+=fLimb(H,K,15,11,NC)+fLimb(K,A,9.5,6.5,NC)+'<ellipse cx="'+A[0].toFixed(1)+'" cy="'+(A[1]+3).toFixed(1)+'" rx="5.5" ry="3" fill="'+NC+'"/>';
     if(has('inner')){var q=frame(H,K,false),test=q(0.5,3);var s2=Math.abs(test[0]-80)<Math.abs(q(0.5,-3)[0]-80)?1:-1;red+=lens(H,K,0.05,0.95,s2,1,6.5,-1.5)}
     if(has('quads'))red+=lens(H,K,0.05,0.95,1,0,5.5,-5.5);
   });
   var arms='';
-  [[0,-1],[1,1]].forEach(function(sd){var i=sd[0],sx=sd[1],S=[80+sx*16,62],W=o.hands[i],E=o.elbows?o.elbows[i]:outerIK(S,W)[0];
+  [[0,-1],[1,1]].forEach(function(sd){var i=sd[0],sx=sd[1],S=[80+sx*16,62+dy],W=o.hands[i],E=o.elbows?o.elbows[i]:outerIK(S,W)[0];
     if(!o.elbows){var r=outerIK(S,W);W=r[1]}
     arms+=fLimb(S,E,9,6,NC)+fLimb(E,W,6.5,4.5,NC)+pc(W,3.4,NC);
     if(has('delts'))red+='<ellipse cx="'+(S[0]+sx*1).toFixed(1)+'" cy="'+(S[1]-1)+'" rx="6.5" ry="6" />';
@@ -552,7 +552,7 @@ function frontPerson(o,m,u){
     o.W=o.W||[];o.W[i]=W;
   });
   h+='<g stroke="rgba(10,12,15,.45)" stroke-width=".8">'+arms+'</g>';
-  if(red)h+='<g fill="var(--hl)" fill-opacity=".9" filter="url(#'+u+'b)">'+red+'</g>';
+  if(red||tred)h+='<g fill="var(--hl)" fill-opacity=".9" filter="url(#'+u+'b)">'+red+(tred?tr+tred+'</g>':'')+'</g>';
   return h;
 }
 function stackBack(x,y,w,h,t){return mTower(x,y,w,h,t)}
@@ -584,6 +584,47 @@ SCN.g_stairs=function(t,ph){ph=ph||0;
   var nf=footAt(ph),ff=footAt(ph+0.5),hy=Math.min(nf[1],ff[1]);
   return {b:mBase()+'<path d="M104 26 L132 26 L146 131 L56 131 L56 127 L100 127 Z" fill="'+MC.dk+'" stroke="'+MC.fr+'" stroke-width="1.5"/>'+mL(102,40,58,124,7,MC.pl)+steps+mL(108,56,114,26,4)+mL(96,56,112,56,4),
     p:{hip:[80,hy-36],t:-80,hand:[102,57],foot:nf,ff:ff},f:mGrip(102,56)}};
+// ===== 기구별 운동할 때 신경 쓸 점 (4개씩) =====
+var TIPS={
+  lp_pin:['등과 엉덩이를 등받이에 완전히 붙이고 시작','발은 발판 가운데, 어깨너비로','무릎을 끝까지 펴서 잠그지 않기','내릴 때 엉덩이가 들리기 직전까지만'],
+  lp_45:['안전 손잡이를 풀기 전에 발부터 발판에','발판 자체가 무거우니 원판 없이 먼저 해보기','무릎은 발끝과 같은 방향으로','끝나면 안전 손잡이를 꼭 다시 걸기'],
+  goblet:['덤벨을 세워 가슴 앞에 붙여 들기','발은 어깨너비, 발끝은 살짝 바깥','무릎이 안쪽으로 모이지 않게','가슴을 세운 채 허벅지가 바닥과 평행할 때까지'],
+  leg_ext:['무릎을 기계의 돌아가는 축과 맞추기','발목 패드는 발등 바로 위에','위에서 1초 멈추고 천천히 내리기','무릎이 아프면 범위를 줄이거나 멈추기'],
+  leg_curl:['무릎을 기계의 돌아가는 축과 맞추기','허벅지 패드로 다리를 단단히 고정','엉덩이가 의자에서 들리지 않게','반동 없이 2초 동안 돌아오기'],
+  db_rdl:['덤벨을 허벅지에 붙여서 내리기','무릎은 살짝만 굽히고 엉덩이를 뒤로','허리는 끝까지 곧게, 등이 굽으면 멈추기','허벅지 뒤가 당길 때까지만 내리기'],
+  adductor:['시작 각도는 편하게 벌어지는 만큼만','허리를 등받이에 붙이기','모을 때 1초 조이고 천천히 벌리기','다리를 벌릴 때 반동 쓰지 않기'],
+  back_ext:['골반이 패드 끝에 오도록 높이 조절','몸이 일직선이 될 때까지만 올라오기','허리를 뒤로 젖히지 않기','팔은 가슴 앞에 모으고 반동 없이'],
+  glute_br:['발뒤꿈치로 바닥을 밀기','무릎부터 어깨까지 일직선일 때까지만','위에서 엉덩이를 1초 조이기','허리가 꺾이지 않게 배에 힘 주기'],
+  chest_press:['손잡이가 가슴 중간 높이가 되게 의자 맞추기','어깨를 내리고 가슴을 편 채로','팔꿈치는 몸통에서 45도 정도','돌아올 때 무게 판이 부딪히지 않게'],
+  incline:['등과 머리를 등받이에 붙이기','손목을 곧게 세우기','어깨가 귀 쪽으로 올라가지 않게','팔꿈치를 끝까지 잠그지 않기'],
+  pec_deck:['손잡이가 어깨 높이가 되게 의자 맞추기','팔꿈치를 살짝 굽힌 채 고정','뒤로 너무 벌려 어깨가 당기지 않게','가운데서 가슴을 1초 조이기'],
+  pushup:['손은 어깨보다 조금 넓게','무릎부터 머리까지 일직선','허리가 처지지 않게 배에 힘','가슴이 바닥 가까이 갈 때까지'],
+  lat_pd:['무릎 패드로 몸을 고정','바는 가슴 위쪽으로 (목 뒤로 당기지 않기)','상체를 너무 뒤로 젖히지 않기','올라갈 때 천천히, 팔이 다 펴질 때까지'],
+  assist_chin:['보조 무게가 클수록 쉬워요','무릎을 받침에 올린 뒤 손잡이 잡기','턱이 손잡이 높이까지 올라오기','내려올 때 천천히, 반동 없이'],
+  cable_row:['무릎을 살짝 굽혀 발판에 발 고정','허리를 곧게 세우고 가슴 펴기','손잡이를 배꼽 쪽으로 당기기','몸을 앞뒤로 흔들지 않기'],
+  db_row:['한 손과 한 무릎을 벤치에 대기','등은 평평하게, 허리 굽히지 않기','덤벨을 엉덩이 쪽으로 당기기','몸통을 비틀지 않기'],
+  tbar:['가슴을 패드에 붙이기','팔꿈치를 몸 뒤로 당기기','허리를 젖히거나 반동 쓰지 않기','원판은 가벼운 것부터'],
+  sh_press:['손잡이가 어깨 높이가 되게 의자 맞추기','허리를 등받이에 붙이기','팔꿈치를 끝까지 잠그지 않기','내릴 때 손잡이가 어깨 높이까지만'],
+  db_lateral:['아주 가벼운 무게로 시작','팔꿈치를 살짝 굽히고 어깨 높이까지만','어깨가 으쓱 올라가지 않게','반동 없이 2초 동안 내리기'],
+  rear_delt:['기계를 마주 보고 가슴을 패드에','팔을 거의 편 채 뒤로 벌리기','어깨를 으쓱하지 않기','가벼운 무게로 천천히'],
+  arm_curl:['팔꿈치를 패드 끝, 기계 축과 맞추기','올릴 때 1초, 내릴 때 2초','손목을 곧게, 꺾지 않기','다 내렸을 때 팔꿈치 잠그지 않기'],
+  pushdown:['팔꿈치를 옆구리에 붙인 채','아래에서 1초 멈추기','상체를 숙여서 누르지 않기','올릴 때 팔꿈치 90도까지만'],
+  plank:['팔꿈치는 어깨 바로 아래','머리부터 발끝까지 일직선','엉덩이가 처지거나 들리지 않게','숨 참지 말고 천천히 호흡'],
+  deadbug:['허리를 바닥에 붙인 채로','반대쪽 팔다리를 천천히 뻗기','허리가 뜨면 뻗는 범위 줄이기','한쪽 8~10회씩 번갈아'],
+  decline_crunch:['각도는 낮게 시작','발을 롤러에 단단히 고정','등을 둥글게 말며 올라오기','손으로 목을 당기지 않기'],
+  g_smith:['안전 고리(스토퍼) 높이를 먼저 맞추기','바를 어깨 뒤 승모근 위에 올리기','발은 어깨너비, 바보다 살짝 앞에','끝나면 바를 돌려 고리에 걸기'],
+  g_bench:['발바닥을 바닥에 붙이기','덤벨을 가슴 옆까지만 내리기','어깨를 벤치에 붙인 채로','덤벨은 허벅지에 올린 뒤 누우며 들기'],
+  g_treadmill:['비상 정지 줄을 옷에 끼우기','처음 5분은 시속 4~5km로','손잡이를 꽉 잡지 않기','끝날 때 속도를 천천히 낮추기'],
+  g_stairs:['발 전체로 계단 밟기','손잡이에 몸무게를 싣지 않기','처음엔 느린 속도로 5분','완전히 멈춘 뒤에 내리기'],
+  g_bike:['안장 높이: 페달 맨 아래에서 무릎이 살짝 굽게','상체는 편하게, 어깨 힘 빼기','무릎이 안쪽으로 모이지 않게','워밍업은 가벼운 강도로 5분']
+};
+Object.keys(TIPS).forEach(function(k){if(LIB[k])LIB[k].tips=TIPS[k];else if(GMETA[k])GMETA[k].tips=TIPS[k]});
+// ===== 스미스 머신: 정면 스쿼트 =====
+FSCN.g_smith=function(t){var dy=lp(-24,-6,t),hy=lp(76,94,t),kx=lp(9,20,t),ky=lp(102,108,t),by=56+dy;
+  var o={dy:dy,hipY:hy,knees:[[80-kx,ky],[80+kx,ky]],ankles:[[69,128],[91,128]],hands:[[52,by+3],[108,by+3]]};
+  var carriage=function(x){return '<rect x="'+(x-5)+'" y="'+(by-7)+'" width="10" height="14" rx="2" fill="'+MC.dk+'" stroke="'+MC.cr+'" stroke-width="1"/>'};
+  return {b:mBase(10,150)+mL(22,4,22,131,6)+mL(138,4,138,131,6)+mL(22,4,138,4,5)+mL(16,96,28,96,3,MC.cr)+mL(132,96,144,96,3,MC.cr),o:o,
+    f:mL(12,by,148,by,4,MC.cr)+carriage(22)+carriage(138)+'<rect x="6" y="'+(by-17)+'" width="7" height="34" rx="2" fill="'+MC.pl+'" stroke="'+MC.edge+'" stroke-width="1.2"/><rect x="147" y="'+(by-17)+'" width="7" height="34" rx="2" fill="'+MC.pl+'" stroke="'+MC.edge+'" stroke-width="1.2"/>'}};
 function metaOf(id){return LIB[id]||GMETA[id]}
 sceneSvg=function(id,t,ph){
   var e=metaOf(id),u='sc'+(++scUid),h='<svg viewBox="0 0 160 140" role="img" aria-label="'+esc(e.n)+' 하는 모습"><defs><filter id="'+u+'b" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="0.9"/></filter></defs>';
