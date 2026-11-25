@@ -208,7 +208,7 @@ h3{font-size:15px;margin:0;font-weight:600}
 <script>
 (function(){
 'use strict';
-// ===== 우리 헬스장 기구 (사진으로 확인한 목록) =====
+// ===== 기구 목록 (첫 설정에서 헬스장 종류를 고르면 미리 켜짐) =====
 var GEAR=[
   {id:'lp_pin',n:'레그프레스 (핀 머신)',cat:'하체'},{id:'lp_45',n:'45도 레그프레스',cat:'하체'},{id:'leg_ext',n:'레그 익스텐션',cat:'하체'},{id:'leg_curl',n:'레그 컬',cat:'하체'},{id:'adductor',n:'이너 타이',cat:'하체'},
   {id:'chest_press',n:'시티드 체스트 프레스',cat:'가슴'},{id:'incline',n:'인클라인 프레스',cat:'가슴'},{id:'pec_deck',n:'펙덱 플라이',cat:'가슴'},
@@ -246,20 +246,22 @@ var LIB = {
   pushdown:{n:'케이블 푸시다운',part:'팔',rec:'팔',gear:'cable',step:5,reps:[12,15],cau:[],tips:['팔꿈치를 옆구리에 붙이기','아래에서 1초 멈추기','몸을 앞으로 숙이지 않기']},
   plank:{n:'플랭크',part:'코어',rec:'코어',gear:'body',step:0,reps:[30,45],sec:true,cau:[],tips:['팔꿈치는 어깨 바로 아래','머리부터 발끝까지 일직선','숨 참지 않기']},
   deadbug:{n:'데드버그',part:'코어',rec:'코어',gear:'body',step:0,reps:[8,10],cau:[],tips:['허리를 바닥에 붙이기','반대쪽 팔다리를 천천히 뻗기','한쪽 8~10회씩']},
+  bw_squat:{n:'맨몸 스쿼트',part:'하체',rec:'하체 앞',gear:'body',step:0,reps:[12,15],cau:['무릎'],tips:[]},
+  superman:{n:'슈퍼맨',part:'등',rec:'등',gear:'body',step:0,reps:[10,12],cau:['허리'],tips:[]},
   decline_crunch:{n:'디클라인 크런치',part:'코어',rec:'코어',gear:'decline',step:0,reps:[10,15],cau:['허리'],tips:['각도는 낮게 시작','등을 둥글게 말며 올라오기','반동 없이']}
 };
 // 운동별로 쓰는 근육
-var MUS={lp_pin:['quads','glutes'],lp_45:['quads','glutes'],goblet:['quads','glutes'],leg_ext:['quads'],leg_curl:['hams','calves'],db_rdl:['hams','glutes','lowback'],adductor:['inner'],back_ext:['lowback','glutes','hams'],glute_br:['glutes','hams'],chest_press:['chest','triceps','delts'],incline:['chest','delts','triceps'],pec_deck:['chest','delts'],pushup:['chest','triceps'],lat_pd:['lats','biceps'],assist_chin:['lats','biceps'],cable_row:['lats','biceps','delts'],db_row:['lats','biceps'],tbar:['lats','biceps'],sh_press:['delts','triceps'],db_lateral:['delts'],rear_delt:['delts','lats'],arm_curl:['biceps','forearm'],pushdown:['triceps'],plank:['abs','delts'],deadbug:['abs'],decline_crunch:['abs']};
+var MUS={lp_pin:['quads','glutes'],lp_45:['quads','glutes'],goblet:['quads','glutes'],leg_ext:['quads'],leg_curl:['hams','calves'],db_rdl:['hams','glutes','lowback'],adductor:['inner'],back_ext:['lowback','glutes','hams'],glute_br:['glutes','hams'],chest_press:['chest','triceps','delts'],incline:['chest','delts','triceps'],pec_deck:['chest','delts'],pushup:['chest','triceps'],lat_pd:['lats','biceps'],assist_chin:['lats','biceps'],cable_row:['lats','biceps','delts'],db_row:['lats','biceps'],tbar:['lats','biceps'],sh_press:['delts','triceps'],db_lateral:['delts'],rear_delt:['delts','lats'],arm_curl:['biceps','forearm'],pushdown:['triceps'],plank:['abs','delts'],deadbug:['abs'],decline_crunch:['abs'],bw_squat:['quads','glutes'],superman:['lowback','lats','glutes']};
 Object.keys(LIB).forEach(function(k){LIB[k].id=k;LIB[k].m=MUS[k]||[]});
 LIB.rear_delt.n='리어 델트 플라이';
 var MN={quads:'허벅지 앞',hams:'허벅지 뒤',inner:'허벅지 안쪽',calves:'종아리',glutes:'엉덩이',chest:'가슴',abs:'복근',lats:'등',lowback:'허리',delts:'어깨',biceps:'이두',triceps:'삼두',forearm:'전완'};
 var WSTART = {lp_pin:40,lp_45:0,goblet:8,leg_ext:15,leg_curl:15,db_rdl:6,adductor:20,chest_press:20,incline:15,pec_deck:15,lat_pd:25,assist_chin:30,cable_row:20,db_row:6,tbar:10,sh_press:10,db_lateral:2,rear_delt:10,arm_curl:10,pushdown:10};
 // ===== 자동 추천 규칙 =====
 var TPL = {
-  A:{name:'전신 A',slots:[['lp_pin','goblet'],['chest_press','pushup'],['lat_pd','assist_chin','db_row'],['leg_ext','glute_br'],['plank','deadbug']]},
-  B:{name:'전신 B',slots:[['leg_curl','db_rdl','glute_br'],['sh_press','db_lateral'],['cable_row','db_row'],['goblet','lp_pin','glute_br'],['assist_chin','lat_pd'],['deadbug','plank']]},
-  U:{name:'상체',slots:[['chest_press','pushup'],['lat_pd','assist_chin'],['sh_press','db_lateral'],['cable_row','db_row'],['arm_curl','pushdown'],['plank','deadbug']]},
-  L:{name:'하체',slots:[['lp_pin','goblet'],['leg_curl','db_rdl'],['leg_ext','glute_br'],['back_ext','glute_br'],['adductor'],['deadbug','plank']]}
+  A:{name:'전신 A',slots:[['lp_pin','goblet','bw_squat'],['chest_press','pushup'],['lat_pd','assist_chin','db_row','superman'],['leg_ext','glute_br'],['plank','deadbug']]},
+  B:{name:'전신 B',slots:[['leg_curl','db_rdl','glute_br'],['sh_press','db_lateral'],['cable_row','db_row','superman'],['goblet','lp_pin','bw_squat','glute_br'],['assist_chin','lat_pd'],['deadbug','plank']]},
+  U:{name:'상체',slots:[['chest_press','pushup'],['lat_pd','assist_chin','superman'],['sh_press','db_lateral'],['cable_row','db_row'],['arm_curl','pushdown'],['plank','deadbug']]},
+  L:{name:'하체',slots:[['lp_pin','goblet','bw_squat'],['leg_curl','db_rdl'],['leg_ext','glute_br'],['back_ext','glute_br'],['adductor'],['deadbug','plank']]}
 };
 var GOALS = ['근력','체형','건강','체중 감량'], CAUTIONS = ['허리','무릎','어깨'];
 function ok(id,st){var e=LIB[id];if(!hasGear(e.gear))return false;if(e.lvl===2)return false;for(var i=0;i<e.cau.length;i++)if(st.caution.indexOf(e.cau[i])>=0)return false;return true}
@@ -528,6 +530,8 @@ var SCN={
   db_rdl:function(t){return {b:floorG(),p:{hip:V([80,68],[70,72],t),t:lp(-90,-16,t),hand:V([82,72],[106,100],t),foot:[82,128]},db:1}},
   db_lateral:function(t){return {b:floorG(),p:{hip:[80,68],t:-90,hand:V([82,72],[116,34],t),foot:[82,128]},db:1}},
   back_ext:function(t){return {b:mL(10,131,150,131,5)+mL(40,128,100,74,6),p:{hip:[104,66],t:lp(60,-45,t),tilt:0,hr:[4,-3],foot:[62,108]},f:mPad(108,72,118,82,10)+mRoll(60,113,5.5)+mRoll(68,118,5.5)}},
+  bw_squat:function(t){return {b:matG(),p:{hip:V([80,66],[70,94],t),t:lp(-90,-64,t),hand:V([84,70],[104,60],t),foot:[82,120]}}},
+  superman:function(t){return {b:matG(),p:{hip:[82,lp(118,114,t)],t:lp(180,170,t),tilt:lp(0,-8,t),hand:V([14,120],[16,104],t),foot:V([138,121],[136,110],t)}}},
   decline_crunch:function(t){return {b:mBase()+mL(36,74,36,131,4)+mL(124,104,124,131,4)+mPad(28,72,134,106,10),p:{hip:[70,78],t:lp(17.8,-50,t),tilt:0,hr:[3,-6],foot:[30,60]},f:mRoll(22,62,5.5)+mRoll(32,56,5.5)}},
   glute_br:function(t){return {b:matG(),p:{hip:V([80,118],[80,100],t),t:lp(180,152,t),tilt:lp(0,28,t),hand:[66,123],foot:[106,122]}}},
   pushup:function(t){return {b:matG(),p:{hip:[70,108],t:lp(-12,-34,t),hand:[110,122],foot:[28,120],fb:-1}}},
@@ -651,6 +655,8 @@ var TIPS={
   pushdown:['팔꿈치를 옆구리에 붙인 채','아래에서 1초 멈추기','상체를 숙여서 누르지 않기','올릴 때 팔꿈치 90도까지만'],
   plank:['팔꿈치는 어깨 바로 아래','머리부터 발끝까지 일직선','엉덩이가 처지거나 들리지 않게','숨 참지 말고 천천히 호흡'],
   deadbug:['허리를 바닥에 붙인 채로','반대쪽 팔다리를 천천히 뻗기','허리가 뜨면 뻗는 범위 줄이기','한쪽 8~10회씩 번갈아'],
+  bw_squat:['발은 어깨너비, 발끝은 살짝 바깥','엉덩이를 뒤로 빼며 의자에 앉듯이','무릎이 안쪽으로 모이지 않게','팔은 앞으로 뻗어 균형 잡기'],
+  superman:['엎드려 팔다리를 쭉 펴고 시작','팔과 다리를 동시에 살짝만 들기','위에서 2초 멈추기','목은 들지 말고 바닥을 보기'],
   decline_crunch:['각도는 낮게 시작','발을 롤러에 단단히 고정','등을 둥글게 말며 올라오기','손으로 목을 당기지 않기'],
   g_smith:['안전 고리(스토퍼) 높이를 먼저 맞추기','바를 어깨 뒤 승모근 위에 올리기','발은 어깨너비, 바보다 살짝 앞에','끝나면 바를 돌려 고리에 걸기'],
   g_bench:['발바닥을 바닥에 붙이기','덤벨을 가슴 옆까지만 내리기','어깨를 벤치에 붙인 채로','덤벨은 허벅지에 올린 뒤 누우며 들기'],
@@ -674,7 +680,7 @@ sceneSvg=function(id,t,ph){
   h+=s.b+P.svg+(typeof s.f==='function'?s.f(P):(s.f||''))+(s.db?dbAt(P.W,s.dv):'');
   return h+'</svg>';
 };
-var EXM={goblet:'db',db_rdl:'db',db_lateral:'db',glute_br:'mat',pushup:'mat',plank:'mat',deadbug:'mat',rear_delt:'pec_deck',decline_crunch:'decline',cable_row:'cable_row'};
+var EXM={bw_squat:'mat',superman:'mat',goblet:'db',db_rdl:'db',db_lateral:'db',glute_br:'mat',pushup:'mat',plank:'mat',deadbug:'mat',rear_delt:'pec_deck',decline_crunch:'decline',cable_row:'cable_row'};
 var GEARM={cable:'cable_row',db:'db',bench:'bench',smith:'smith',treadmill:'treadmill',stairs:'stairs',bike:'bike',back_ext:'back_ext',decline:'decline'};
 function machFor(e){return EXM[e.id]||(MACH[e.id]?e.id:GEARM[e.gear]||'mat')}
 function machSvg(key,label,t){var f=MACH[key]||MACH.mat;return '<svg viewBox="0 0 160 140" role="img" aria-label="'+esc(label||'')+' 기구 그림">'+f(t||0)+'</svg>'}
@@ -702,15 +708,23 @@ function placard(id,tips){
   return h+'</div></div>';
 }
 
+// ===== 헬스장 종류별로 미리 켜두는 기구 =====
+var GYMS=[
+  {k:'small',n:'작은 헬스장',d:'아파트·회사·동네 헬스장',g:['lp_pin','leg_ext','leg_curl','chest_press','lat_pd','cable','sh_press','db','bench','treadmill','bike']},
+  {k:'big',n:'큰 헬스장',d:'기구가 많은 헬스장',g:GEAR.map(function(x){return x.id})},
+  {k:'dumbbell',n:'덤벨과 벤치만',d:'집이나 작은 운동 공간',g:['db','bench']},
+  {k:'none',n:'기구 없이',d:'매트만 있으면 돼요',g:[]},
+  {k:'custom',n:'직접 고르기',d:'모두 꺼진 상태에서 하나씩 켜요',g:[]}
+];
 // ===== 첫 설정 =====
 function vOnb(){
-  var o=S.od,st=o.settings,n=S.onb,total=6,h='<div class="scene">';
-  if(n>0)h+='<div class="top"><button class="pill" data-act="onbprev">← 뒤로</button><div class="steps-dots">'+[1,2,3,4,5,6].map(function(i){return '<i class="'+(i<=n?'on':'')+'"></i>'}).join('')+'</div><span style="width:58px"></span></div>';
+  var o=S.od,st=o.settings,n=S.onb,total=7,h='<div class="scene">';
+  if(n>0)h+='<div class="top"><button class="pill" data-act="onbprev">← 뒤로</button><div class="steps-dots">'+[1,2,3,4,5,6,7].map(function(i){return '<i class="'+(i<=n?'on':'')+'"></i>'}).join('')+'</div><span style="width:58px"></span></div>';
   var next=function(label,dis){return '<div class="bottom"><button class="btn pri" data-act="onbnext"'+(dis?' disabled':'')+'>'+(label||'다음')+'</button></div>'};
   if(n===0){
     h+='<div class="grow" style="display:flex;flex-direction:column;justify-content:center;gap:16px"><div class="eyebrow">짐코치 테스트 버전</div><h1 style="font-size:28px">헬스장에서 폰 하나로 받는 PT</h1>';
-    h+='<div class="card" style="display:flex;flex-direction:column;gap:10px"><p>· 우리 헬스장 기구로 프로그램을 짜드려요</p><p>· 기록을 보고 다음 무게를 정해드려요</p><p>· 부위별 회복 상태를 보고 운동량을 조절해요</p></div>';
-    h+='<p class="small muted">질문 5개면 끝나요. 기록은 이 폰 안에만 저장되고, 로그인은 없어요.</p></div>'+next('시작하기');
+    h+='<div class="card" style="display:flex;flex-direction:column;gap:10px"><p>· 내가 다니는 헬스장 기구로 프로그램을 짜드려요</p><p>· 기록을 보고 다음 무게를 정해드려요</p><p>· 부위별 회복 상태를 보고 운동량을 조절해요</p></div>';
+    h+='<p class="small muted">질문 6개면 끝나요. 기록은 이 폰 안에만 저장되고, 로그인은 없어요.</p></div>'+next('시작하기');
   }else if(n===1){
     h+='<h1>운동하는 목적이 뭔가요?</h1><div class="menu">'+[['근력','힘을 기르고 싶어요'],['체형','몸매를 다듬고 싶어요'],['건강','건강하게 꾸준히 하고 싶어요'],['체중 감량','살을 빼고 싶어요']].map(function(g){return '<button class="mrow" data-act="ogoal" data-v="'+g[0]+'" style="'+(st.goal===g[0]?'outline:2px solid var(--accent)':'')+'"><span><span class="nm">'+g[0]+'</span><br><span class="meta">'+g[1]+'</span></span><span class="chev">'+(st.goal===g[0]?'✓':'')+'</span></button>'}).join('')+'</div>'+next();
   }else if(n===2){
@@ -721,9 +735,12 @@ function vOnb(){
   }else if(n===4){
     h+='<h1>아프거나 조심할 부위가 있나요?</h1><p class="small muted">고른 부위에 부담이 큰 운동은 빼고 추천해요. 여러 개 고를 수 있어요.</p><div class="menu">'+CAUTIONS.map(function(c){var on=st.caution.indexOf(c)>=0;return '<button class="mrow" data-act="ocau" data-v="'+c+'" style="'+(on?'outline:2px solid var(--accent)':'')+'"><span class="nm">'+c+'</span><span class="chev">'+(on?'✓':'')+'</span></button>'}).join('')+'<button class="mrow" data-act="ocau" data-v="없음" style="'+(!st.caution.length?'outline:2px solid var(--accent)':'')+'"><span class="nm">없어요</span><span class="chev">'+(!st.caution.length?'✓':'')+'</span></button></div><p class="small faint">통증이 있으면 운동 전에 의사나 전문가와 먼저 상담하세요.</p>'+next();
   }else if(n===5){
-    h+='<h1>헬스장에 있는 기구를 확인해 주세요</h1><p class="small muted">우리 아파트 헬스장 기구가 모두 켜져 있어요. 없는 기구만 눌러서 끄세요.</p><div class="gear grow scroll" style="align-content:start">';
+    h+='<h1>어디서 운동하나요?</h1><p class="small muted">고르면 그곳에 흔히 있는 기구를 미리 켜둘게요. 다음 화면에서 더하거나 뺄 수 있어요.</p><div class="menu">'+GYMS.map(function(g){var on=o.gym===g.k;return '<button class="mrow" data-act="ogym" data-v="'+g.k+'" style="'+(on?'outline:2px solid var(--accent)':'')+'"><span><span class="nm">'+g.n+'</span><br><span class="meta">'+g.d+'</span></span><span class="chev">'+(on?'✓':'')+'</span></button>'}).join('')+'</div>'+next('다음',!o.gym);
+  }else if(n===6){
+    h+='<h1>다니는 헬스장에 있는 기구를 골라주세요</h1><p class="small muted">켜진 기구 '+o.gearOn.length+'개 · 눌러서 켜고 끌 수 있어요. 기구가 없어도 맨몸 운동으로 채워드려요.</p><div class="gear grow scroll" style="align-content:start">';
     GEAR.forEach(function(g){var on=o.gearOn.indexOf(g.id)>=0;h+='<button class="g" data-act="ogear" data-g="'+g.id+'" style="'+(on?'':'opacity:.4')+'">'+gthumb(g)+'<span style="min-width:0"><span class="gn">'+g.n+'</span><br><span class="gm">'+(on?'있음 ✓':'없음')+'</span></span></button>'});
     h+='</div>'+next('내 플랜 만들기');
+  }else if(false){
   }else{
     var keep=D.gearOn;D.gearOn=o.gearOn;var pg=generate(st);D.gearOn=keep;S.oprog=pg;
     h+='<h1>내 플랜이 준비됐어요</h1><p class="small muted">주 '+st.freq+'회 · '+st.minutes+'분 · '+st.goal+(o.exp==='처음'?' · 첫 6번은 적응 기간':'')+'</p><div class="card grow scroll">';
@@ -892,7 +909,7 @@ function vRecords(){
 function vMe(){
   var h='<div class="scene"><h1>내 정보</h1><div class="menu">';
   h+='<button class="mrow" data-act="go" data-s="prog" data-from="me"><span><span class="nm">내 프로그램</span><br><span class="meta">'+D.prog.map(function(x){return x.name}).join(' · ')+' · 주 '+D.settings.freq+'회 · '+D.settings.minutes+'분</span></span><span class="chev">›</span></button>';
-  h+='<button class="mrow" data-act="go" data-s="gear"><span><span class="nm">우리 헬스장 기구</span><br><span class="meta">'+D.gearOn.length+'개 사용 · 세팅 메모 '+Object.keys(D.memos).length+'개</span></span><span class="chev">›</span></button>';
+  h+='<button class="mrow" data-act="go" data-s="gear"><span><span class="nm">내 헬스장 기구</span><br><span class="meta">'+D.gearOn.length+'개 사용 · 세팅 메모 '+Object.keys(D.memos).length+'개</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="data"><span><span class="nm">내 데이터 · 백업</span><br><span class="meta">운동 '+D.history.length+'회 기록 · 이 폰 안에만 저장돼요</span></span><span class="chev">›</span></button>';
   return h+'</div><p class="small faint" style="margin-top:auto;text-align:center">짐코치 테스트 버전 0.1</p></div>';
 }
@@ -920,7 +937,7 @@ function vProg(){
 }
 function vGear(){
   var cats=['하체','가슴','등','어깨·팔','유산소','기타'],list=GEAR.filter(function(g){return g.cat===S.gearCat});
-  var h='<div class="scene"><div class="top"><button class="pill" data-act="go" data-s="me">← 뒤로</button><span class="small muted">'+D.gearOn.length+'개 사용</span></div><h1>우리 헬스장 기구</h1>';
+  var h='<div class="scene"><div class="top"><button class="pill" data-act="go" data-s="me">← 뒤로</button><span class="small muted">'+D.gearOn.length+'개 사용</span></div><h1>내 헬스장 기구</h1>';
   h+='<div class="chips">'+cats.map(function(c){return '<button data-act="gcat" data-v="'+c+'" aria-pressed="'+(S.gearCat===c)+'">'+c+'</button>'}).join('')+'</div>';
   h+='<div class="gear grow scroll" style="align-content:start">';
   list.forEach(function(g){var u=usesOf(g.id);h+='<button class="g" data-act="gearinfo" data-g="'+g.id+'">'+gthumb(g)+'<span style="min-width:0"><span class="gn">'+g.n+'</span><br><span class="gm">'+(D.gearOn.indexOf(g.id)>=0?'운동 '+u.length+'가지':'없음')+(D.memos[g.id]?' · 메모':'')+'</span></span></button>'});
@@ -944,7 +961,7 @@ function sheetGear(gid){
   else if(GMETA['g_'+gid])h+='<div style="height:min(56vh,420px);display:flex;flex-direction:column">'+placard('g_'+gid,true)+'</div>';
   else h+='<div class="plac" style="padding:12px;max-height:40vh">'+gthumb(g).replace('class="thumb"','class="thumb" style="width:100%;height:auto;aspect-ratio:8/7"')+'</div>';
   h+=memoField(gid);
-  var on=D.gearOn.indexOf(gid)>=0;h+='<button class="btn ghost sm" data-act="gtoggle" data-g="'+gid+'">'+(on?'우리 헬스장에 없는 기구로 표시':'우리 헬스장에 있는 기구로 표시')+'</button>';
+  var on=D.gearOn.indexOf(gid)>=0;h+='<button class="btn ghost sm" data-act="gtoggle" data-g="'+gid+'">'+(on?'내 헬스장에 없는 기구로 표시':'내 헬스장에 있는 기구로 표시')+'</button>';
   if(u.length)h+='<div><h3 style="margin-bottom:6px">이 기구로 하는 운동</h3><div class="chips">'+u.map(function(k){return '<button data-act="exinfo" data-id="'+k+'">'+LIB[k].n+'</button>'}).join('')+'</div></div>';
   return h+'<button class="btn sec" data-act="close">닫기</button>';
 }
@@ -962,7 +979,7 @@ function sheetPick(mode,i){
   var inDay=d.items.map(function(x){return x.id}),parts=['전체','하체','가슴','등','어깨','팔','코어'],flt=mode==='add'?S.addFilter:cur.part;
   var list=Object.keys(LIB).filter(function(k){var e=LIB[k];return hasGear(e.gear)&&inDay.indexOf(k)<0&&(flt==='전체'||e.part===flt)});
   list.sort(function(a,b){return (LIB[a].lvl||1)-(LIB[b].lvl||1)});
-  var h='<h2>'+(mode==='add'?'운동 추가':cur.n+' 대신')+'</h2><p class="small muted">'+(mode==='add'?'우리 헬스장 기구로 할 수 있는 운동이에요.':(mode==='today'?'오늘만 바꿔요. 프로그램은 그대로예요.':'같은 부위를 쓰는 운동이에요.'))+'</p>';
+  var h='<h2>'+(mode==='add'?'운동 추가':cur.n+' 대신')+'</h2><p class="small muted">'+(mode==='add'?'내 헬스장 기구로 할 수 있는 운동이에요.':(mode==='today'?'오늘만 바꿔요. 프로그램은 그대로예요.':'같은 부위를 쓰는 운동이에요.'))+'</p>';
   if(mode==='add')h+='<div class="chips">'+parts.map(function(p){return '<button data-act="afilter" data-v="'+p+'" aria-pressed="'+(S.addFilter===p)+'">'+p+'</button>'}).join('')+'</div>';
   h+='<div class="alt">'+(list.length?'':'<p class="small muted">더 고를 운동이 없어요.</p>');
   list.forEach(function(k){var e=LIB[k],warn=e.cau.filter(function(c){return D.settings.caution.indexOf(c)>=0});h+='<button class="altrow" data-act="pick" data-mode="'+mode+'" data-i="'+(i==null?'':i)+'" data-id="'+k+'">'+thumb(e)+'<span><span class="nm">'+e.n+'</span><br><span class="meta">'+e.m.map(function(x){return MN[x]}).join(' · ')+(e.lvl===2?' · 7주차 이후':'')+'</span>'+(warn.length?'<br><span class="note">'+warn.join(', ')+'에 부담</span>':'')+'</span></button>'});
@@ -1065,13 +1082,14 @@ document.addEventListener('click',function(ev){
   else if(a==='kind'){S.newGear.kind=t.dataset.k;openSheet(sheetAddGear())}
   else if(a==='savegear'){if(!S.newGear.kind)return;D.extraGear.push({nm:S.newGear.kind});save();closeSheet();S.gearCat='기타';render();toast(S.newGear.kind+'을(를) 추가했어요')}
   else if(a==='mplay'){var on=t.dataset.play!=='1';t.dataset.play=on?'1':'0';var hn=t.querySelector('.mhint');if(hn)hn.textContent=on?'■ 눌러서 멈추기':'▶ 눌러서 움직임 보기';var drawAt=function(v){return t.dataset.ex?sceneSvg(t.dataset.ex,v):machSvg(t.dataset.mach,t.dataset.label,v)};if(!on)t.querySelector('.mbox').innerHTML=drawAt(0);if(on&&reduceMotion){t.querySelector('.mbox').innerHTML=drawAt(1);t.dataset.play='0';if(hn)hn.textContent='움직인 뒤 모습'}}
-  else if(a==='onbnext'){if(S.onb<6){S.onb++;render()}else{var o=S.od;D.settings=o.settings;D.exp=o.exp;D.gearOn=o.gearOn;D.prog=S.oprog||generate(o.settings);D.onboarded=true;D.nextDay=0;save();S.screen='home';S.tab='today';render();toast('내 플랜을 저장했어요')}}
+  else if(a==='onbnext'){if(S.onb<7){S.onb++;render()}else{var o=S.od;D.settings=o.settings;D.exp=o.exp;D.gearOn=o.gearOn;D.prog=S.oprog||generate(o.settings);D.onboarded=true;D.nextDay=0;save();S.screen='home';S.tab='today';render();toast('내 플랜을 저장했어요')}}
   else if(a==='onbprev'){S.onb=Math.max(0,S.onb-1);render()}
   else if(a==='ogoal'){S.od.settings.goal=t.dataset.v;render()}
   else if(a==='ofreq'){S.od.settings.freq=+t.dataset.v;render()}
   else if(a==='omin'){S.od.settings.minutes=+t.dataset.v;render()}
   else if(a==='oexp'){S.od.exp=t.dataset.v;render()}
   else if(a==='ocau'){var oc=S.od.settings.caution,ov=t.dataset.v;if(ov==='없음')oc.length=0;else{var oi=oc.indexOf(ov);if(oi>=0)oc.splice(oi,1);else oc.push(ov)}render()}
+  else if(a==='ogym'){var gy=GYMS.filter(function(x){return x.k===t.dataset.v})[0];S.od.gym=gy.k;S.od.gearOn=gy.g.slice();S.onb=6;render()}
   else if(a==='ogear'){var og=S.od.gearOn,oi2=og.indexOf(t.dataset.g);if(oi2>=0)og.splice(oi2,1);else og.push(t.dataset.g);render()}
   else if(a==='data'){S.confirmReset=false;openSheet(sheetData())}
   else if(a==='export'){exportData()}
