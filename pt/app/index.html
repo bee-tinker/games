@@ -143,16 +143,16 @@ h3{font-size:15px;margin:0;font-weight:600}
 .wtop{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
 .wtop .ws{background:var(--surface);border-radius:12px;padding:8px 4px;text-align:center}
 .wtop .ws .wl{display:block;font-size:12px;color:var(--muted)}
-.wtop .ws b{display:block;font-size:30px;font-weight:700;line-height:1.05}
+.wtop .ws b{display:block;font-size:30px;font-weight:700;line-height:1.05;margin:2px 0}
 .wtop .ws b small{font-size:16px;color:var(--muted);font-weight:600}
 .wtop .ws.now{background:var(--accent-soft)}
 .wtop .ws.now b{color:var(--accent)}
-.wring{position:relative;width:min(124px,32vw);aspect-ratio:1}
+.wring{position:relative;width:min(100px,27vw);aspect-ratio:1}
 .wring svg{width:100%;height:100%;transform:rotate(-90deg)}
 .wring .t{position:absolute;inset:0;display:grid;place-items:center;align-content:center;text-align:center}
-.wring .t b{font-size:27px;font-weight:700;line-height:1}
-.wring .t .wl{font-size:11.5px;color:var(--muted);margin-top:3px}
-@media (max-height:680px){.wring{width:96px}.wring .t b{font-size:21px}}
+.wring .t b{font-size:24px;font-weight:700;line-height:1}
+.wring .t .wl{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.2;white-space:nowrap}
+@media (max-height:680px){.wring{width:84px}.wring .t b{font-size:20px}}
 .wstat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .wstat>div{background:var(--surface);border-radius:12px;padding:6px 6px 8px;text-align:center}
 .wstat .wl{display:block;font-size:12px;color:var(--muted)}
@@ -225,7 +225,7 @@ h3{font-size:15px;margin:0;font-weight:600}
 .tabs button[aria-current="page"]{color:var(--fg)} .tabs button[aria-current="page"] svg{color:var(--accent)}
 .ad{max-width:440px;margin:0 auto;text-align:center;font-size:11.5px;color:var(--faint);padding:4px 16px 6px;border-top:1px dashed var(--line)}
 .ad b{font-weight:500;color:var(--muted);margin-right:6px}
-.toast{position:fixed;left:50%;top:calc(60px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:99px;font-size:13px;z-index:50;max-width:calc(100% - 32px);text-align:center}
+.toast{position:fixed;left:50%;top:calc(8px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:99px;font-size:13px;z-index:50;max-width:calc(100% - 32px);text-align:center}
 @media (max-height:640px){.dial .v{font-size:30px}.btn{padding:12px}h1{font-size:20px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -840,27 +840,26 @@ function vPreview(){
 function startWorkout(){
   var sets=[];
   plan().forEach(function(x){if(!x.n)return;x.warm.forEach(function(w,j){sets.push({id:x.id,e:x.e,kind:'warm',no:j+1,w:w,reps:10})});for(var s=1;s<=x.n;s++)sets.push({id:x.id,e:x.e,kind:'main',no:s,w:x.w,reps:x.e.reps[1],first:x.first,hurt:x.hurt})});
-  S.pct=intensity();S.planSec=Math.max(600,minutes(plan())*60);S.sets=sets;S.cur=0;S.start=Date.now();S.screen='work';S.askFeel=false;keepAwake(true);announce();render();
+  S.pct=intensity();S.planSec=Math.max(600,minutes(plan())*60);S.sets=sets;S.cur=0;S.start=Date.now();S.setStart=Date.now();S.screen='work';S.askFeel=false;keepAwake(true);announce();render();
 }
 function curSet(){return S.sets[S.cur]}
 function announce(){var c=curSet();if(!c)return;say(c.e.n+', '+(c.kind==='warm'?'워밍업 '+c.no:c.no+'세트')+'. '+(c.e.sec?c.reps+'초':(c.e.step?(c.e.assist?'보조 ':'')+c.w+'킬로 ':'')+c.reps+'회'))}
 function groups(){var g=[];S.sets.forEach(function(s){if(g.indexOf(s.id)<0)g.push(s.id)});return g}
 // 오늘 예정 시간에서 줄어드는 원 타이머
-function timeLeft(){var el=Math.floor((Date.now()-S.start)/1000),tot=S.planSec||2700,rem=tot-el,a=Math.abs(rem),txt=Math.floor(a/60)+':'+String(a%60).padStart(2,'0');
-  return {over:rem<0,txt:(rem<0?'+':'')+txt,lab:rem<0?'시간 초과':'남은 시간',off:(326.7*(1-Math.max(0,rem)/tot)).toFixed(1)}}
+function setTime(){var c=curSet(),alloc=c?(c.e.sec?c.reps+10:c.reps*4+15):60,el=Math.floor((Date.now()-(S.setStart||S.start))/1000),rem=alloc-el,a=Math.abs(rem),txt=Math.floor(a/60)+':'+String(a%60).padStart(2,'0');
+  return {over:rem<0,txt:(rem<0?'+':'')+txt,lab:rem<0?'시간 초과':'세트 남은 시간',off:(326.7*(1-Math.max(0,rem)/alloc)).toFixed(1)}}
 function elapsed(){var s=Math.floor((Date.now()-S.start)/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 function vWork(){
   var c=curSet(),e=c.e,g=groups(),gi=g.indexOf(c.id),done=S.sets.filter(function(s){return s.done}).length,gr=GMAP[e.gear],memo=D.memos[e.gear];
   var mine=S.sets.filter(function(s){return s.id===c.id}),mains=mine.filter(function(s){return s.kind==='main'}).length;
   var h='<div class="scene" style="gap:10px">';
   var left=S.sets.length-done;
-  h+='<div class="top"><button class="pill" data-act="finish">끝내기</button><span class="small muted">'+(gi+1)+'번째 운동 / '+g.length+'개</span>'+voiceBtn()+'</div>';
-  var tm=timeLeft();
-  h+='<div class="wtop"><div class="ws now"><span class="wl">'+(c.kind==='warm'?'워밍업':'지금 세트')+'</span><b class="num">'+(c.kind==='warm'?c.no+'<small>/'+mine.filter(function(s){return s.kind==='warm'}).length+'</small>':c.no+'<small>/'+mains+'</small>')+'</b></div>';
-  h+='<div class="wring" role="timer" aria-label="오늘 운동 남은 시간"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" fill="none" stroke="var(--surface-2)" stroke-width="9"/><circle id="warc" cx="60" cy="60" r="52" fill="none" stroke="'+(tm.over?'var(--warn)':'var(--accent)')+'" stroke-width="9" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="'+tm.off+'"/></svg><div class="t"><b class="num" id="clock" style="color:'+(tm.over?'var(--warn)':'var(--fg)')+'">'+tm.txt+'</b><span class="wl" id="clocklab">'+tm.lab+'</span></div></div>';
-  h+='<div class="ws"><span class="wl">남은 세트</span><b class="num">'+left+'<small>개</small></b></div></div>';
+  h+='<div class="top"><button class="pill" data-act="finish">끝내기</button><span class="small muted num">'+(gi+1)+'/'+g.length+' 운동 · 전체 <span id="clockall">'+elapsed()+'</span></span>'+voiceBtn()+'</div>';
+  var tm=setTime();
+  h+='<div class="wtop"><div class="ws now"><span class="wl">'+(c.kind==='warm'?'워밍업':'지금 세트')+'</span><b class="num">'+(c.kind==='warm'?c.no+'<small>/'+mine.filter(function(s){return s.kind==='warm'}).length+'</small>':c.no+'<small>/'+mains+'</small>')+'</b><span class="wl">목표 '+repsText(e)+'</span></div>';
+  h+='<div class="wring" role="timer" aria-label="이번 세트 남은 시간"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" fill="none" stroke="var(--surface-2)" stroke-width="10"/><circle id="warc" cx="60" cy="60" r="52" fill="none" stroke="'+(tm.over?'var(--warn)':'var(--accent)')+'" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="'+tm.off+'"/></svg><div class="t"><b class="num" id="clock" style="color:'+(tm.over?'var(--warn)':'var(--fg)')+'">'+tm.txt+'</b><span class="wl" id="clocklab">'+tm.lab+'</span></div></div>';
+  h+='<div class="ws"><span class="wl">남은 세트</span><b class="num">'+left+'<small>개</small></b><span class="wl">전체 '+S.sets.length+'세트</span></div></div>';
   h+='<div class="progress" aria-hidden="true"><i style="width:'+Math.round(done/S.sets.length*100)+'%"></i></div>';
-  h+='<div class="row between"><div class="setdots" aria-label="세트 진행">'+mine.map(function(s){return '<i class="'+(s.kind==='warm'?'warm ':'')+(s.done?'done':s===c?'cur':'')+'"></i>'}).join('')+'</div><span class="small muted">목표 '+repsText(e)+'</span></div>';
   h+=placard(c.id,false);
   h+='<div class="btns"><button class="btn ghost sm" data-act="exinfo" data-id="'+c.id+'">사용법'+(gr?' · 내 세팅':'')+'</button><button class="btn ghost sm" data-act="talt">다른 운동으로</button></div>';
   if(memo)h+='<div class="memo"><b>내 세팅</b><span>'+esc(memo)+'</span></div>';
@@ -969,7 +968,7 @@ function vMe(){
   h+='<button class="mrow" data-act="go" data-s="prog" data-from="me"><span><span class="nm">내 프로그램</span><br><span class="meta">'+D.prog.map(function(x){return x.name}).join(' · ')+' · 주 '+D.settings.freq+'회 · '+D.settings.minutes+'분</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="go" data-s="gear"><span><span class="nm">내 헬스장 기구</span><br><span class="meta">'+D.gearOn.length+'개 사용 · 세팅 메모 '+Object.keys(D.memos).length+'개</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="data"><span><span class="nm">내 데이터 · 백업</span><br><span class="meta">운동 '+D.history.length+'회 기록 · 이 폰 안에만 저장돼요</span></span><span class="chev">›</span></button>';
-  return h+'</div><p class="small faint" style="margin-top:auto;text-align:center">짐코치 테스트 버전 0.1.4</p></div>';
+  return h+'</div><p class="small faint" style="margin-top:auto;text-align:center">짐코치 테스트 버전 0.1.5</p></div>';
 }
 function sheetData(){
   var h='<h2>내 데이터 · 백업</h2><p class="small muted">기록은 이 폰의 브라우저 안에만 있어요. 브라우저 데이터를 지우거나 폰을 바꾸면 사라지니 가끔 백업 파일을 저장해 두세요.</p>';
@@ -1083,12 +1082,12 @@ function render(){
 function tab(k,label,ico){return '<button data-act="tab" data-k="'+k+'" aria-current="'+(S.tab===k&&S.screen==='home'?'page':'false')+'">'+ico+label+'</button>'}
 
 setInterval(function(){
-  if(S.screen==='work'){var c=document.getElementById('clock'),wa=document.getElementById('warc'),lb=document.getElementById('clocklab');if(c){var tm=timeLeft();c.textContent=tm.txt;c.style.color=tm.over?'var(--warn)':'var(--fg)';if(wa){wa.setAttribute('stroke-dashoffset',tm.off);wa.setAttribute('stroke',tm.over?'var(--warn)':'var(--accent)')}if(lb)lb.textContent=tm.lab}}
+  if(S.screen==='work'){var ca=document.getElementById('clockall');if(ca)ca.textContent=elapsed();var c=document.getElementById('clock'),wa=document.getElementById('warc'),lb=document.getElementById('clocklab');if(c&&!S.askFeel){var tm=setTime();c.textContent=tm.txt;c.style.color=tm.over?'var(--warn)':'var(--fg)';if(wa){wa.setAttribute('stroke-dashoffset',tm.off);wa.setAttribute('stroke',tm.over?'var(--warn)':'var(--accent)')}if(lb)lb.textContent=tm.lab}}
   if(S.screen==='rest'){
     var left=restLeft(),rt=document.getElementById('rt'),arc=document.getElementById('arc');
     if(rt)rt.textContent=fmtRest();if(arc)arc.setAttribute('stroke-dashoffset',(552.9*(1-left/S.restTotal)).toFixed(1));
     if(left===3&&!S.said3){S.said3=true;say('3초')}
-    if(left<=0){beep();buzz();S.screen='work';render();announce()}
+    if(left<=0){beep();buzz();S.screen='work';S.setStart=Date.now();render();announce()}
   }
 },250);
 
@@ -1141,7 +1140,7 @@ document.addEventListener('click',function(ev){
     S.restTotal=c2.kind==='warm'?45:(nx.id!==c2.id?120:(c2.e.step?90:60));S.restEnd=Date.now()+S.restTotal*1000;S.screen='rest';render()
   }
   else if(a==='rest'){S.restEnd=Math.max(Date.now()+5000,S.restEnd+(+t.dataset.d)*1000);S.restTotal=Math.max(S.restTotal,restLeft());render()}
-  else if(a==='skip'){S.screen='work';render();announce()}
+  else if(a==='skip'){S.screen='work';S.setStart=Date.now();render();announce()}
   else if(a==='finish'){if(S.sets.some(function(s){return s.done})){S.result=finishSession();S.screen='done'}else S.screen='home';keepAwake(false);render()}
   else if(a==='home'){S.screen='home';S.tab='today';render()}
   else if(a==='talt'){openSheet(sheetPick('today',null))}
