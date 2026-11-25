@@ -10,6 +10,7 @@
   --accent:#ff8a3d; --accent-ink:#1f1006; --accent-soft:rgba(255,138,61,.14);
   --good:#4cc38a; --warn:#e8b341; --bad:#e5534b; --info:#6aa9ff;
   --skin:#363d47; --skin-hi:#5c6571; --hl:#ef4a4a;
+  --m-frame:#7b838f; --m-dark:#2b3038; --m-pad:#1c1f24; --m-edge:#8e96a2; --m-chrome:#d5d9de; --m-plate:#16181c;
   --f-text:'IBM Plex Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   --f-num:'Barlow Semi Condensed','IBM Plex Sans KR',system-ui,sans-serif;
   --dock:88px;
@@ -74,7 +75,11 @@ h3{font-size:15px;margin:0;font-weight:600}
 .plac{border-radius:12px;overflow:hidden;border:1.5px solid #80868e;background:#0b0c0e;display:flex;flex-direction:column}
 .plac-h{background:#d9dcdf;color:#16181b;padding:7px 12px;text-align:center;font-size:17px;font-weight:700}
 .plac-b{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;color:#e9ebee;min-height:0;flex:1}
-.plac-fig{flex:1;min-height:0}
+.plac-fig{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}
+.plac-mach{flex:1.05;min-height:0;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #2a2e34;padding-bottom:6px}
+.plac-mach svg{height:100%;width:auto;max-width:100%}
+.plac-bodies{flex:1;min-height:0;display:flex;justify-content:center;gap:14px}
+.plac-bodies svg{height:100%;width:auto}
 .plac-m{font-size:14px;font-weight:700;line-height:1.4;text-align:center}
 .plac-t{margin:0;padding-left:18px;font-size:13px;color:#d3d7dc;display:flex;flex-direction:column;gap:2px}
 
@@ -82,8 +87,8 @@ h3{font-size:15px;margin:0;font-weight:600}
 .list{display:flex;flex-direction:column}
 .item{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);width:100%;text-align:left}
 .item:first-child{border-top:0}
-.thumb{width:40px;height:40px;border-radius:10px;background:#0b0c0e;display:grid;place-items:center;overflow:hidden;padding:2px}
-.thumb svg{height:100%;width:auto}
+.thumb{width:40px;height:40px;border-radius:10px;background:#0b0c0e;display:grid;place-items:center;overflow:hidden;padding:3px}
+.thumb svg{width:100%;height:100%}
 .nm{font-weight:600;font-size:15px}
 .meta{font-size:12.5px;color:var(--muted)}
 .note{font-size:12px;color:var(--warn)}
@@ -147,8 +152,8 @@ h3{font-size:15px;margin:0;font-weight:600}
 .menu{display:flex;flex-direction:column;gap:8px}
 .mrow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;background:var(--surface);border-radius:14px;padding:16px;text-align:left;width:100%}
 .gear{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.g{background:var(--surface);border-radius:12px;padding:8px;text-align:left;display:grid;grid-template-columns:44px 1fr;gap:8px;align-items:center;min-width:0}
-.g .thumb{width:44px;height:52px}
+.g{background:var(--surface);border-radius:12px;padding:8px;text-align:left;display:grid;grid-template-columns:48px 1fr;gap:8px;align-items:center;min-width:0}
+.g .thumb{width:48px;height:44px}
 .g .gn{font-weight:600;font-size:13.5px;line-height:1.3}
 .g .gm{font-size:11px;color:var(--muted)}
 .g.add{border:1.5px dashed var(--line);background:transparent;color:var(--muted);display:flex;justify-content:center}
@@ -345,13 +350,59 @@ function bodyArt(view,opt){
   h+=mirror('<path d="'+SIL+'" fill="none" stroke="rgba(255,255,255,.22)" stroke-width=".7"/>');
   return h+'</svg>';
 }
+// ===== 기구 그림 (옆에서 본 모습) =====
+// 프레임·쿠션·무게 판·케이블을 단순한 도형으로 그림. viewBox 0 0 160 140, 사용자는 오른쪽을 보고 앉는다.
+var MC={fr:'var(--m-frame)',dk:'var(--m-dark)',pad:'var(--m-pad)',edge:'var(--m-edge)',cr:'var(--m-chrome)',pl:'var(--m-plate)'};
+function mL(x1,y1,x2,y2,w,c){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+(c||MC.fr)+'" stroke-width="'+(w||5)+'" stroke-linecap="round"/>'}
+function mPad(x1,y1,x2,y2,w){return mL(x1,y1,x2,y2,w+2.5,MC.edge)+mL(x1,y1,x2,y2,w,MC.pad)}
+function mRoll(x,y,r){return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+MC.pad+'" stroke="'+MC.edge+'" stroke-width="1.3"/>'}
+function mGrip(x,y){return '<circle cx="'+x+'" cy="'+y+'" r="3.6" fill="'+MC.cr+'"/>'}
+function mPulley(x,y){return '<circle cx="'+x+'" cy="'+y+'" r="4.5" fill="'+MC.dk+'" stroke="'+MC.cr+'" stroke-width="1.5"/>'}
+function mCable(x1,y1,x2,y2){return mL(x1,y1,x2,y2,1.3,MC.cr)}
+function mPlate(x,y,r){return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+MC.pl+'" stroke="'+MC.edge+'" stroke-width="1.2"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.22)+'" fill="'+MC.cr+'"/>'}
+function mBase(x1,x2){return mL(x1||10,131,x2||150,131,5)}
+function mTower(x,y,w,h){var s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="5" fill="'+MC.dk+'" stroke="'+MC.fr+'" stroke-width="1.5"/>',sy=y+h*0.45;
+  s+='<rect x="'+(x+4)+'" y="'+sy+'" width="'+(w-8)+'" height="'+(y+h-sy-6)+'" fill="'+MC.pl+'"/>';
+  for(var yy=sy+5;yy<y+h-7;yy+=5)s+=mL(x+4,yy,x+w-4,yy,0.8,MC.edge);
+  return s+mL(x+w/2,y+8,x+w/2,sy,1.4,MC.cr)+'<rect x="'+(x+w-7)+'" y="'+(sy+14)+'" width="6" height="3" rx="1" fill="var(--warn)"/>';}
+function mDumbbell(cx,cy,s){var hw=22*s,hh=15*s;return mL(cx-hw,cy,cx+hw,cy,5*s,MC.cr)+'<rect x="'+(cx-hw-10*s)+'" y="'+(cy-hh)+'" width="'+(14*s)+'" height="'+(hh*2)+'" rx="'+(3*s)+'" fill="'+MC.pl+'" stroke="'+MC.edge+'" stroke-width="1.2"/><rect x="'+(cx+hw-4*s)+'" y="'+(cy-hh)+'" width="'+(14*s)+'" height="'+(hh*2)+'" rx="'+(3*s)+'" fill="'+MC.pl+'" stroke="'+MC.edge+'" stroke-width="1.2"/>'}
+var MACH={
+  lp_pin:function(){return mBase()+mTower(10,26,26,105)+mL(36,120,124,120,5)+mL(122,100,122,120,4)+mPad(122,56,122,100,10)+mL(66,104,66,131,5)+mPad(46,100,88,100,9)+mPad(52,95,38,56,10)+mGrip(86,108)},
+  lp_45:function(){return mBase()+mL(58,129,150,36,6)+mPlate(134,58,15)+mPad(98,60,122,86,10)+mL(40,116,40,131,5)+mPad(26,112,62,112,9)+mPad(30,107,12,82,10)+mGrip(56,104)},
+  leg_ext:function(){return mBase()+mTower(10,26,26,105)+mL(68,100,68,131,5)+mPad(46,96,92,96,9)+mPad(50,91,44,50,10)+mL(96,93,100,117,5)+'<circle cx="96" cy="93" r="4.5" fill="'+MC.cr+'"/>'+mRoll(102,121,7)+mGrip(86,104)},
+  leg_curl:function(){return mBase()+mTower(10,26,26,105)+mL(68,100,68,131,5)+mPad(46,96,92,96,9)+mPad(50,91,44,50,10)+mPad(78,80,102,80,8)+mL(96,93,126,96,5)+'<circle cx="96" cy="93" r="4.5" fill="'+MC.cr+'"/>'+mRoll(128,97,7)+mGrip(86,104)},
+  adductor:function(){return mBase()+mTower(10,26,26,105)+mL(68,102,68,131,5)+mPad(46,98,92,98,9)+mPad(52,93,48,54,10)+mL(98,104,74,120,4)+mPad(98,76,98,104,9)+mGrip(84,106)},
+  chest_press:function(){return mBase()+mTower(10,18,26,113)+mL(70,104,70,131,5)+mPad(50,100,86,100,9)+mPad(56,95,52,38,11)+mL(36,32,98,60,5)+mL(98,56,98,76,4)+mGrip(98,66)},
+  incline:function(){return mBase()+mTower(10,18,26,113)+mL(72,108,72,131,5)+mPad(56,104,90,104,9)+mPad(60,99,34,56,11)+mL(36,26,94,38,5)+mL(94,34,94,50,4)+mGrip(94,42)},
+  pec_deck:function(){return mBase()+mTower(10,18,26,113)+mL(70,108,70,131,5)+mPad(52,104,86,104,9)+mPad(58,99,56,44,11)+'<circle cx="62" cy="30" r="5" fill="'+MC.cr+'"/>'+mL(62,30,106,34,6)+mPad(106,38,106,76,9)},
+  lat_pd:function(){return mBase()+mTower(10,6,20,125)+mL(28,10,116,10,6)+mPulley(108,15)+mCable(108,15,104,44)+mL(80,44,128,46,4,MC.cr)+mL(100,108,100,131,5)+mPad(84,104,118,104,9)+mL(106,86,106,104,4)+mRoll(106,85,6)},
+  assist_chin:function(){return mBase()+mTower(10,6,20,125)+mL(28,12,100,12,6)+mL(100,12,100,24,4)+mGrip(100,24)+mL(28,50,92,50,4)+mGrip(92,50)+mL(36,104,62,88,5)+mPad(60,86,98,86,9)+mL(56,114,84,114,4)},
+  cable_row:function(){return mBase()+'<rect x="132" y="16" width="18" height="115" rx="5" fill="'+MC.dk+'" stroke="'+MC.fr+'" stroke-width="1.5"/>'+mPulley(128,121)+mCable(128,121,96,98)+'<path d="M90 96 L96 104 L102 96" fill="none" stroke="'+MC.cr+'" stroke-width="3" stroke-linejoin="round"/>'+mPad(112,90,112,124,7)+mL(28,108,28,131,4)+mL(70,108,70,131,4)+mPad(18,104,80,104,9)},
+  pushdown:function(){return mBase()+'<rect x="118" y="6" width="22" height="125" rx="5" fill="'+MC.dk+'" stroke="'+MC.fr+'" stroke-width="1.5"/>'+mPulley(113,14)+mCable(113,14,104,70)+mL(92,72,116,72,4,MC.cr)},
+  tbar:function(){return mBase()+mL(86,66,86,131,5)+mPad(68,80,106,56,10)+mPad(48,124,82,124,6)+mL(22,126,128,92,5,MC.cr)+mPlate(132,90,14)+mL(100,99,106,108,4)+mGrip(106,108)},
+  sh_press:function(){return mBase()+mTower(10,18,26,113)+mL(70,108,70,131,5)+mPad(52,104,86,104,9)+mPad(58,99,56,44,11)+mL(36,30,88,30,5)+mL(88,30,90,48,4)+mGrip(90,46)},
+  arm_curl:function(){return mBase()+mTower(10,26,26,105)+mL(54,112,54,131,5)+mPad(38,108,70,108,9)+mL(90,94,90,131,5)+mPad(72,84,106,98,10)+'<circle cx="108" cy="97" r="4.5" fill="'+MC.cr+'"/>'+mL(108,97,120,70,4)+mGrip(120,70)},
+  db:function(){return mL(14,131,146,131,2,MC.edge)+mDumbbell(82,72,1.25)+mDumbbell(70,112,0.8)},
+  db_row:function(){return mL(14,131,146,131,2,MC.edge)+mL(52,100,52,131,4)+mL(120,100,120,131,4)+mPad(40,96,132,96,10)+mDumbbell(84,118,0.7)},
+  mat:function(){return '<path d="M22 112 L124 112 L146 124 L42 124 Z" fill="'+MC.pad+'" stroke="'+MC.edge+'" stroke-width="1.3"/><circle cx="34" cy="104" r="8" fill="'+MC.pad+'" stroke="'+MC.edge+'" stroke-width="1.3"/>'},
+  back_ext:function(){return mL(14,131,146,131,5)+mL(34,128,112,60,6)+mPad(104,60,124,80,11)+mRoll(44,116,6)+mRoll(54,124,6)+mL(116,58,128,48,4)+mGrip(128,48)},
+  decline:function(){return mBase()+mL(36,74,36,131,4)+mL(124,104,124,131,4)+mPad(28,72,134,106,10)+mRoll(22,62,6)+mRoll(32,56,6)},
+  smith:function(){return mBase()+mL(30,8,30,131,6)+mL(130,8,130,131,6)+mL(30,8,130,8,5)+mL(20,64,140,64,4,MC.cr)+mPlate(26,64,13)+mPlate(134,64,13)},
+  bench:function(){return mL(14,131,146,131,2,MC.edge)+mL(46,100,46,131,4)+mL(116,100,116,131,4)+mPad(30,96,130,96,10)+mPad(36,90,26,56,9)},
+  cardio:function(){return mL(14,131,146,131,2,MC.edge)+'<path d="M24 120 L132 112 L136 124 L26 128 Z" fill="'+MC.dk+'" stroke="'+MC.fr+'" stroke-width="1.5"/>'+mL(112,112,104,48,5)+mL(96,44,124,52,5)+'<rect x="92" y="34" width="22" height="12" rx="3" fill="'+MC.dk+'" stroke="'+MC.cr+'" stroke-width="1.2"/>'}
+};
+var EXM={goblet:'db',db_rdl:'db',db_lateral:'db',glute_br:'mat',pushup:'mat',plank:'mat',deadbug:'mat',rear_delt:'pec_deck',decline_crunch:'decline',cable_row:'cable_row'};
+var GEARM={cable:'cable_row',db:'db',bench:'bench',smith:'smith',cardio:'cardio',back_ext:'back_ext',decline:'decline'};
+function machFor(e){return EXM[e.id]||(MACH[e.id]?e.id:GEARM[e.gear]||'mat')}
+function machSvg(key,label){var f=MACH[key]||MACH.mat;return '<svg viewBox="0 0 160 140" role="img" aria-label="'+esc(label||'')+' 기구 그림">'+f()+'</svg>'}
 var FRONTM=['chest','abs','quads','inner','biceps','shin'],BACKM=['lats','lowback','glutes','hams','calves','triceps'];
 function mainView(m){var a=m.filter(function(k){return FRONTM.indexOf(k)>=0}).length,b=m.filter(function(k){return BACKM.indexOf(k)>=0}).length;return b>a?'back':'front'}
-function thumb(e){return '<span class="thumb">'+(e?bodyArt(mainView(e.m),{hl:e.m}):I.mat)+'</span>'}
+function thumb(e){return '<span class="thumb">'+machSvg(e?machFor(e):'mat',e?e.n:'')+'</span>'}
+function gthumb(g){var u=usesOf(g.id),k=MACH[g.id]?g.id:GEARM[g.id]||(u.length?machFor(LIB[u[0]]):'mat');return '<span class="thumb">'+machSvg(k,g.n)+'</span>'}
 function placard(id,tips){
   var e=LIB[id];
-  var h='<div class="plac'+(tips?'':' grow')+'"><div class="plac-h">'+e.n+'</div><div class="plac-b">';
-  h+='<div class="plac-fig bodies">'+bodyArt('front',{hl:e.m})+bodyArt('back',{hl:e.m})+'</div>';
+  var h='<div class="plac grow"><div class="plac-h">'+e.n+'</div><div class="plac-b">';
+  h+='<div class="plac-fig"><div class="plac-mach">'+machSvg(machFor(e),e.n)+'</div><div class="plac-bodies">'+bodyArt('front',{hl:e.m})+bodyArt('back',{hl:e.m})+'</div></div>';
   h+='<div class="plac-m">'+e.m.map(function(k){return MN[k]}).join(' / ')+'</div>';
   if(tips)h+='<ol class="plac-t">'+e.tips.map(function(t){return '<li>'+t+'</li>'}).join('')+'</ol>';
   return h+'</div></div>';
@@ -500,7 +551,7 @@ function vGear(){
   var h='<div class="scene"><div class="top"><button class="pill" data-act="go" data-s="me">← 뒤로</button><span class="small muted">'+(GEAR.length+D.extraGear.length)+'개</span></div><h1>우리 헬스장 기구</h1>';
   h+='<div class="chips">'+cats.map(function(c){return '<button data-act="gcat" data-v="'+c+'" aria-pressed="'+(S.gearCat===c)+'">'+c+'</button>'}).join('')+'</div>';
   h+='<div class="gear grow scroll" style="align-content:start">';
-  list.forEach(function(g){var u=usesOf(g.id),e=u.length?LIB[u[0]]:null;h+='<button class="g" data-act="gearinfo" data-g="'+g.id+'">'+thumb(e)+'<span style="min-width:0"><span class="gn">'+g.n+'</span><br><span class="gm">운동 '+u.length+'가지'+(D.memos[g.id]?' · 메모':'')+'</span></span></button>'});
+  list.forEach(function(g){var u=usesOf(g.id);h+='<button class="g" data-act="gearinfo" data-g="'+g.id+'">'+gthumb(g)+'<span style="min-width:0"><span class="gn">'+g.n+'</span><br><span class="gm">운동 '+u.length+'가지'+(D.memos[g.id]?' · 메모':'')+'</span></span></button>'});
   if(S.gearCat==='기타')D.extraGear.forEach(function(g){h+='<div class="g">'+thumb(null)+'<span class="gn">'+esc(g.nm)+'</span></div>'});
   h+='</div><div class="bottom"><button class="btn sec sm" data-act="addgear">+ 기구 추가</button></div></div>';
   return h;
@@ -510,7 +561,7 @@ function usesOf(gid){return Object.keys(LIB).filter(function(k){return LIB[k].ge
 // ===== 시트 =====
 function sheetEx(id){
   var e=LIB[id],g=GMAP[e.gear];
-  var h=placard(id,true)+'<p class="small muted">목표 '+repsText(e)+(g?' · '+g.n:' · 기구 없이')+'</p>';
+  var h='<div style="height:min(58vh,440px);display:flex;flex-direction:column">'+placard(id,true)+'</div><p class="small muted">목표 '+repsText(e)+(g?' · '+g.n:' · 기구 없이')+'</p>';
   if(g)h+=memoField(e.gear);
   return h+'<button class="btn sec" data-act="close">닫기</button>';
 }
@@ -518,6 +569,7 @@ function sheetGear(gid){
   var g=GMAP[gid],u=usesOf(gid);
   var h='<h2>'+g.n+'</h2>';
   if(u.length)h+='<div style="height:min(46vh,340px);display:flex">'+placard(u[0],false)+'</div>';
+  else h+='<div class="plac" style="padding:12px;max-height:40vh">'+gthumb(g).replace('class="thumb"','class="thumb" style="width:100%;height:auto;aspect-ratio:8/7"')+'</div>';
   h+=memoField(gid);
   if(u.length)h+='<div><h3 style="margin-bottom:6px">이 기구로 하는 운동</h3><div class="chips">'+u.map(function(k){return '<button data-act="exinfo" data-id="'+k+'">'+LIB[k].n+'</button>'}).join('')+'</div></div>';
   return h+'<button class="btn sec" data-act="close">닫기</button>';
