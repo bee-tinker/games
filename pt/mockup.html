@@ -9,7 +9,7 @@
   --fg:#eef0f3; --muted:#9aa1ac; --faint:#6b727d;
   --accent:#ff8a3d; --accent-ink:#1f1006; --accent-soft:rgba(255,138,61,.14);
   --good:#4cc38a; --warn:#e8b341; --bad:#e5534b; --info:#6aa9ff;
-  --skin:#3c434e; --fig:#d3d8df; --fig-far:#858d99; --eq:#454c57; --eq-2:#5a626e;
+  --skin:#3c434e; --art:#c3c9d1; --hl:#ef4a4a; --fig:#d3d8df; --fig-far:#858d99; --eq:#454c57; --eq-2:#5a626e;
   --f-text:'IBM Plex Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   --f-num:'Barlow Semi Condensed','IBM Plex Sans KR',system-ui,sans-serif;
   --r:14px;
@@ -120,10 +120,21 @@ p{margin:0}
 .figanim{position:absolute;inset:0}
 .figinset{position:absolute;top:8px;right:8px;width:26%;display:flex;gap:2px;padding:6px 4px;border-radius:10px;background:rgba(14,16,19,.6)}
 .figinset svg{width:50%;height:auto}
+.plac{border-radius:12px;overflow:hidden;border:1.5px solid #8b9098;background:#0b0c0e}
+.plac-h{background:#d9dcdf;color:#16181b;padding:8px 12px;text-align:center;display:flex;flex-direction:column;line-height:1.25}
+.plac-h b{font-size:18px;font-weight:700}
+.plac-h span{font-size:12px;color:#4b5058}
+.plac-b{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;color:#e9ebee}
+.plac-fig{display:grid;grid-template-columns:2fr 1fr 2fr;gap:6px;align-items:end;max-width:300px;margin:0 auto;width:100%}
+.plac-fig svg{width:100%;height:auto;max-height:190px}
+.plac-m{font-size:14px;font-weight:700;line-height:1.45}
+.plac-m span{font-weight:400;color:#9aa1ac;font-size:12px}
+.plac-t{margin:0;padding-left:18px;font-size:13px;color:#d3d7dc;display:flex;flex-direction:column;gap:2px}
+.thumb.art{background:#0b0c0e;padding:3px}
 .ex-orig{font-size:11.5px;color:var(--faint)}
 .figcap{position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}
 .figcap i{width:9px;height:9px;border-radius:3px;background:var(--accent);display:inline-block}
-.thumb svg{width:100%;height:100%}
+.thumb.art svg{width:100%;height:100%}
 .photo{aspect-ratio:4/3;max-width:100%;border:1.5px dashed var(--line);border-radius:12px;display:grid;place-items:center;text-align:center;color:var(--faint);font-size:13px;background:var(--surface-2);overflow:hidden}
 .photo.has{border:0}
 .photo img{width:100%;height:100%;object-fit:cover;display:block}
@@ -312,9 +323,9 @@ function recColor(v){return v>=80?'var(--good)':v>=50?'var(--warn)':'var(--bad)'
 function today(){return D.prog[0]}
 function repsText(e){return e.reps[0]+'~'+e.reps[1]+(e.sec?'초':'회')}
 function fmtSet(e,w,reps){if(e.sec)return reps+'초';if(!e.step)return '맨몸 × '+reps+'회';return (e.assist?'보조 ':'')+w+'kg × '+reps+'회'}
-function thumb(e){return '<span class="thumb">'+fig(e.id,1)+'</span>'}
+function thumb(e){var m=FIG[e.id]&&FIG[e.id].m||[];return '<span class="thumb art">'+bodyArt(mainView(m),{hl:m,w:1.4})+'</span>'}
 function figBox(id){var mm=FIG[id]&&FIG[id].m||[],m=mm.map(function(k){return MN[k]}).join(' · ');
-  return '<div class="figbox"><div class="figanim" data-fig="'+id+'" data-anim="1">'+fig(id,0)+'</div><div class="figinset">'+bodyMap(false,mm)+bodyMap(true,mm)+'</div></div>'+(m?'<div class="row small muted" style="margin-top:-4px"><i class="dot" style="background:var(--accent)"></i>쓰는 근육: '+m+'</div>':'')}
+  return '<div class="figbox"><div class="figanim" data-fig="'+id+'" data-anim="1">'+fig(id,0)+'</div></div>'}
 
 function plan(){
   var pct=intensity(),adj={short:-1,normal:0,long:1}[S.time];
@@ -349,8 +360,8 @@ var I={
   mat:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 17h18M5 17c0-3 3-6 7-6s7 3 7 6"/><circle cx="12" cy="7" r="2.5"/></svg>'
 };
 
-// ===== 인체도 =====
-// 오른쪽 절반만 그리고 좌우 반전해서 붙임. [회복 부위, 근육 이름, 경로] — 회복 부위가 null이면 피부
+// ===== 근육 인체도 (기구 안내판 스타일: 선 그림 + 쓰는 근육만 빨간색) =====
+// 앞·뒤는 오른쪽 절반만 그리고 좌우 반전. [회복 부위, 근육, 경로]
 function f(p){return recColor(REC[p])}
 var BF=[
   ['등','lats','M66 33 C70 37 74 40 79 42 L64 42 Z'],
@@ -368,6 +379,7 @@ var BF=[
   ['하체 앞','shin','M67 182 C72 180 77 182 78 190 C79 202 76 214 73 222 L69 222 C66 212 65 196 67 182 Z'],
   [null,'','M68 224 L74 224 C77 227 80 230 80 233 C77 235 70 235 67 233 C67 229 67 226 68 224 Z']
 ];
+var DF=['M70 47 C72 56 74 62 78 64','M80 46 C81 52 82 56 84 60','M84 70 C85 76 86 82 86 88','M88 98 C89 104 89 110 89 116','M74 76 L79 78','M73 86 L79 88','M73 96 L78 98','M71 124 C72 138 73 150 72 166','M76 121 C79 134 79 148 76 162','M73 184 C73 196 72 208 71 220'];
 var BB=[
   ['어깨','delts','M66 42 C76 37 86 41 88 53 C89 60 86 64 82 64 C80 56 76 50 70 46 Z'],
   ['팔','triceps','M81 63 C86 62 90 68 90 76 C90 84 88 88 85 90 C82 84 80 74 81 63 Z'],
@@ -383,17 +395,58 @@ var BB=[
   [null,'','M69 213 L74 213 L74.5 222 L69 222 Z'],
   [null,'','M68 224 L74 224 C77 227 80 230 80 233 C77 235 70 235 67 233 C67 229 67 226 68 224 Z']
 ];
-// hl 이 있으면: 그 운동에 쓰는 근육만 주황색 (운동 그림 옆 작은 인체도). 없으면: 회복 상태 색.
-function bodyMap(back,hl){
-  var fillOf=function(m){if(hl)return m[1]&&hl.indexOf(m[1])>=0?'var(--accent)':'var(--skin)';return m[0]?f(m[0]):'var(--skin)'};
-  var half=(back?BB:BF).map(function(m){return '<path d="'+m[2]+'" fill="'+fillOf(m)+'"/>'}).join('');
-  var center='<ellipse cx="60" cy="17" rx="10" ry="12" fill="var(--skin)"/><path d="M54 28 L66 28 L66.5 39 L53.5 39 Z" fill="var(--skin)"/>';
-  if(back)center+='<path d="M54 29 L66 29 L80 41 L68 46 L60 64 L52 46 L40 41 Z" fill="'+fillOf(['등','lats'])+'"/>';
-  var label=(back?'뒷모습':'앞모습')+(hl?' 쓰는 근육':' 근육 회복 상태');
-  return '<svg viewBox="16 2 88 236" role="img" aria-label="'+label+'"><g stroke="'+(hl?'var(--bg)':'var(--surface)')+'" stroke-width="1.2" stroke-linejoin="round">'+center+half+'<g transform="translate(120 0) scale(-1 1)">'+half+'</g></g></svg>';
+var DB=['M84 68 C85 74 86 80 86 86','M88 98 C89 104 89 110 89 116','M66 80 C70 84 73 88 75 92','M67 126 C71 130 75 132 79 132','M71 152 C71 158 71.5 164 72 169','M72.5 186 C72.5 194 72.5 202 72 210'];
+var BS=[
+  [null,'','M27 27 L35 27 L35.5 38 L26.5 38 Z'],
+  ['등','lats','M22 50 C26 54 29 60 30 66 L30 88 C26 82 22 72 21 62 Z'],
+  ['코어','lowback','M21 64 C23 76 27 86 30 92 L30 104 C25 100 21 90 20 80 Z'],
+  ['가슴','chest','M37 46 C42 48 44 54 43 62 C41 66 38 66 36 64 Z'],
+  ['코어','abs','M38 68 C42 74 43 84 42 96 C41 104 39 110 37 112 L36.5 70 Z'],
+  ['코어','abs','M30.5 66 L36 67 L36 108 C33 106 31 98 30.5 88 Z'],
+  ['엉덩이','glutes','M19 104 C24 100 31 104 33 112 C34 122 30 130 24 132 C20 128 18 118 19 104 Z'],
+  ['하체 앞','quads','M33 112 C40 116 43 128 42 144 C41 156 38 166 35 170 L31 168 C31 152 31 132 33 112 Z'],
+  ['햄스트링','hams','M22 134 C27 132 31 136 31 146 L31 168 C27 168 23 160 22 150 C21 144 21 138 22 134 Z'],
+  [null,'','M30 170 C34 170 37 172 37 176 C36 180 32 181 30 179 C28 176 28 172 30 170 Z'],
+  ['하체 앞','shin','M32 182 C35 182 37 186 37 194 C37 206 36 216 35 222 L33 222 C32 210 32 196 32 182 Z'],
+  ['햄스트링','calves','M26 182 C30 180 32 186 32 196 L33 222 L30 222 C28 212 25 204 24 194 C24 188 25 184 26 182 Z'],
+  [null,'','M29 224 L36 224 C40 226 44 229 44 232 C40 234 32 234 29 232 Z'],
+  ['팔','triceps','M25.5 58 C29 57 31.5 61 31.5 69 L31.5 86 C28.5 86 25.5 80 24.8 72 C24.2 66 24.2 61 25.5 58 Z'],
+  ['팔','biceps','M32 59 C36 59 37.5 65 37.5 73 C37.5 81 36 86 34 88 L32 86 C31.8 78 31.8 68 32 59 Z'],
+  ['팔','forearm','M27 90 C31 88 36 90 36 98 C36 108 34 116 32 120 L29 120 C27 112 26 100 27 90 Z'],
+  [null,'','M29 121 L33 121 C35 125 35 130 33 133 C31 134 29 132 28 128 Z'],
+  ['어깨','delts','M24 42 C27 38 36 38 39 44 C40 50 38 56 35 58 C31 56 27 53 24 48 Z']
+];
+var DS=['M38 76 L42 78','M38 86 L42 88','M38 96 L41.5 98','M37 120 C38 136 38 152 36 166','M27 188 C28 198 30 208 31 218'];
+var ART='var(--art)';
+// opt.hl: 쓰는 근육 배열(빨간색) · opt.rec: 회복 색 · opt.w: 선 굵기
+function bodyArt(view,opt){
+  opt=opt||{};
+  var parts=view==='side'?BS:view==='back'?BB:BF,det=view==='side'?DS:view==='back'?DB:DF,sw=opt.w||0.85;
+  var fillOf=function(m){if(opt.hl)return m[1]&&opt.hl.indexOf(m[1])>=0?'var(--hl)':'none';if(opt.rec&&m[0])return f(m[0]);return 'none'};
+  var draw=function(list){return list.map(function(m){var fl=fillOf(m);return '<path d="'+m[2]+'" fill="'+fl+'"'+(fl!=='none'?' fill-opacity="'+(opt.hl?0.95:0.72)+'"':'')+'/>'}).join('')+det.map(function(d){return '<path d="'+d+'" fill="none"/>'}).join('')};
+  var g='<g stroke="'+ART+'" stroke-width="'+sw+'" stroke-linejoin="round" stroke-linecap="round">';
+  var head=view==='side'?'<ellipse cx="31" cy="16" rx="9" ry="11" fill="none"/>':'<ellipse cx="60" cy="17" rx="10" ry="12" fill="none"/><path d="M54 28 L66 28 L66.5 39 L53.5 39 Z" fill="none"/>';
+  var body;
+  if(view==='side')body=draw(parts);
+  else{var half=draw(parts);body=half+'<g transform="translate(120 0) scale(-1 1)">'+half+'</g>';if(view==='back'){var tf=fillOf(['등','lats']);body='<path d="M54 29 L66 29 L80 41 L68 46 L60 64 L52 46 L40 41 Z" fill="'+tf+'"'+(tf!=='none'?' fill-opacity=".95"':'')+'/>'+body}}
+  var vb=view==='side'?'8 2 44 236':'16 2 88 236',lab={front:'앞모습',back:'뒷모습',side:'옆모습'}[view];
+  return '<svg viewBox="'+vb+'" role="img" aria-label="'+lab+(opt.hl?' 쓰는 근육':' 근육 회복 상태')+'">'+g+head+body+'</g></svg>';
 }
-function bodyFront(){return bodyMap(false)}
-function bodyBack(){return bodyMap(true)}
+function bodyFront(){return bodyArt('front',{rec:true,w:1})}
+function bodyBack(){return bodyArt('back',{rec:true,w:1})}
+var FRONTM=['chest','abs','quads','inner','biceps','shin'],BACKM=['lats','lowback','glutes','hams','calves','triceps'];
+function mainView(m){var a=m.filter(function(k){return FRONTM.indexOf(k)>=0}).length,b=m.filter(function(k){return BACKM.indexOf(k)>=0}).length;return b>a?'back':'front'}
+// 안내판 카드: 회색 제목 띠 + 검은 바탕 + 앞·옆·뒤 근육 그림 + 근육 이름 + 사용법 번호 목록
+var MN2={quads:'대퇴사두근',hams:'햄스트링',inner:'내전근',calves:'비복근',glutes:'둔근',chest:'대흉근',abs:'복직근 · 복사근',lats:'광배근',lowback:'척추기립근',delts:'삼각근',biceps:'이두근',triceps:'삼두근',forearm:'전완근'};
+function placard(id,withTips){
+  var e=LIB[id],m=FIG[id]&&FIG[id].m||[];
+  var names=m.map(function(k){return MN[k]+' <span>'+MN2[k]+'</span>'}).join(' / ');
+  var h='<div class="plac"><div class="plac-h"><b>'+e.n+'</b><span>'+e.o+'</span></div><div class="plac-b">';
+  h+='<div class="plac-fig">'+bodyArt('front',{hl:m})+bodyArt('side',{hl:m})+bodyArt('back',{hl:m})+'</div>';
+  h+='<div class="plac-m">'+names+'</div>';
+  if(withTips)h+='<ol class="plac-t">'+e.tips.map(function(t){return '<li>'+t+'</li>'}).join('')+'</ol>';
+  return h+'</div></div>';
+}
 
 // ===== 운동 동작 그림 (직접 그린 사람 그림 + 쓰는 근육 표시) =====
 // 자세는 엉덩이 위치, 몸통 각도, 손·발 목표점으로 정하고 팔다리는 관절 계산(IK)으로 그림. a→b 사이를 반복 재생.
@@ -647,10 +700,9 @@ function vWork(){
   h+='<div class="topbar"><button class="pill" data-act="finish">끝내기</button><span class="num muted" id="clock">'+elapsed()+'</span><button class="pill" data-act="voice" aria-pressed="'+S.voice+'">음성 '+(S.voice?'켜짐':'꺼짐')+'</button></div>';
   h+='<div class="progress" aria-hidden="true"><i style="width:'+Math.round(done/S.sets.length*100)+'%"></i></div>';
   h+='<div class="row between"><span class="eyebrow">'+(gi+1)+' / '+g.length+' 운동 · '+e.part+'</span><span class="eyebrow">목표 '+repsText(e)+'</span></div>';
-  h+='<div><h1>'+e.n+'</h1><div class="muted small">기구에 적힌 이름: '+e.o+'</div></div>';
-  h+=figBox(c.id);
+  h+=placard(c.id,true);
   if(gr)h+='<button class="memo" data-act="memo" data-g="'+e.gear+'"><b>내 세팅</b><span class="'+(memo?'':'muted')+'">'+(memo?esc(memo):'의자 높이·핀 위치를 적어두세요')+'</span></button>';
-  h+='<div class="btns"><button class="btn ghost" data-act="exinfo" data-id="'+c.id+'">사용법 · 자세</button><button class="btn ghost" data-act="talt">다른 운동으로 대체</button></div>';
+  h+='<div class="btns"><button class="btn ghost" data-act="exinfo" data-id="'+c.id+'">움직이는 동작 보기</button><button class="btn ghost" data-act="talt">다른 운동으로 대체</button></div>';
   h+='<div class="sets">';
   S.sets.forEach(function(s,i){if(s.id!==c.id)return;var cls=i===S.cur?'cur':s.done?'done':'';h+='<div class="set '+cls+'"><span>'+(s.kind==='warm'?'워밍업 '+s.no:s.no+'세트')+'</span><span class="num">'+fmtSet(e,s.w,s.reps)+'</span><span class="st">'+(s.done?(s.feel||'완료'):i===S.cur?'지금':'')+'</span></div>'});
   h+='</div>';
@@ -734,22 +786,22 @@ function vMe(){
   return h;
 }
 function firstEx(gid){var k=Object.keys(LIB).filter(function(k){return LIB[k].gear===gid&&FIG[k]});return k[0]}
+function gearArt(id){var m=FIG[id]&&FIG[id].m||[];return '<span style="display:grid;grid-template-columns:1fr 1fr;gap:4px;height:100%;width:70%">'+bodyArt('front',{hl:m,w:1.1})+bodyArt('back',{hl:m,w:1.1})+'</span>'}
 function usesOf(gid){return Object.keys(LIB).filter(function(k){return LIB[k].gear===gid})}
-function gearCard(g){var m=D.memos[g.id],n=usesOf(g.id).length;return '<button class="g" data-act="gearinfo" data-g="'+g.id+'"><span class="ph">'+fig(firstEx(g.id),1)+'</span><span class="nm">'+g.n+'</span><span class="ex-orig">'+(g.o||'')+'</span><span class="meta">운동 '+n+'가지 · '+(m?'세팅 메모 있음':'메모 없음')+'</span></button>'}
+function gearCard(g){var m=D.memos[g.id],n=usesOf(g.id).length;return '<button class="g" data-act="gearinfo" data-g="'+g.id+'"><span class="ph" style="background:#0b0c0e;padding:6px">'+gearArt(firstEx(g.id))+'</span><span class="nm">'+g.n+'</span><span class="ex-orig">'+(g.o||'')+'</span><span class="meta">운동 '+n+'가지 · '+(m?'세팅 메모 있음':'메모 없음')+'</span></button>'}
 
 // ===== 시트 =====
 function sheetEx(id){
   var e=LIB[id],g=GMAP[e.gear];
-  var h='<h2>'+e.n+'</h2><div class="muted small" style="margin-bottom:10px">기구에 적힌 이름: '+e.o+' · '+repsText(e)+'</div><div class="stack">';
-  h+=figBox(id);
-  h+='<div><h3 style="margin-bottom:6px">자세 포인트</h3><ol class="tips">'+e.tips.map(function(t){return '<li>'+t+'</li>'}).join('')+'</ol></div>';
+  var h='<div class="stack"><div class="muted small">목표 '+repsText(e)+(g?' · '+g.n:' · 기구 없이')+'</div>';
+  h+=placard(id,true)+'<div><h3 style="margin-bottom:6px">움직이는 동작</h3>'+figBox(id)+'</div>';
   if(g)h+=memoField(e.gear);
   return h+'<button class="btn sec" data-act="close">닫기</button></div>';
 }
 function sheetGear(gid){
   var g=GMAP[gid],uses=usesOf(gid);
   var h='<h2>'+g.n+'</h2><div class="muted small" style="margin-bottom:10px">기구에 적힌 이름: '+(g.o||g.n)+' · '+g.cat+'</div><div class="stack">';
-  if(firstEx(gid))h+=figBox(firstEx(gid));
+  if(firstEx(gid))h+=placard(firstEx(gid),false);
   h+=memoField(gid);
   if(uses.length)h+='<div><h3 style="margin-bottom:6px">이 기구로 하는 운동</h3><div class="chips">'+uses.map(function(k){return '<button data-act="exinfo" data-id="'+k+'">'+LIB[k].n+'</button>'}).join('')+'</div></div>';
   return h+'<button class="btn sec" data-act="close">닫기</button></div>';
