@@ -140,6 +140,13 @@ h3{font-size:15px;margin:0;font-weight:600}
 .feel{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .feel button{padding:13px 4px;border-radius:12px;background:var(--surface-2);font-weight:600}
 .feel button small{display:block;font-weight:400;font-size:11px;color:var(--muted)}
+.wstat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.wstat>div{background:var(--surface);border-radius:12px;padding:6px 6px 8px;text-align:center}
+.wstat .wl{display:block;font-size:12px;color:var(--muted)}
+.wstat b{display:block;font-size:32px;font-weight:700;line-height:1.05;color:var(--fg)}
+.wstat b small{font-size:17px;color:var(--muted);font-weight:600}
+.wstat .now{background:var(--accent-soft)}
+.wstat .now b{color:var(--accent)}
 .memo{font-size:13px;background:var(--surface-2);border-radius:10px;padding:7px 12px;display:flex;gap:8px;width:100%;text-align:left}
 .memo b{color:var(--accent);font-weight:600;white-space:nowrap}
 .ring{position:relative;width:min(240px,62vw);aspect-ratio:1;margin:0 auto}
@@ -205,7 +212,7 @@ h3{font-size:15px;margin:0;font-weight:600}
 .tabs button[aria-current="page"]{color:var(--fg)} .tabs button[aria-current="page"] svg{color:var(--accent)}
 .ad{max-width:440px;margin:0 auto;text-align:center;font-size:11.5px;color:var(--faint);padding:4px 16px 6px;border-top:1px dashed var(--line)}
 .ad b{font-weight:500;color:var(--muted);margin-right:6px}
-.toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:99px;font-size:13px;z-index:50;max-width:calc(100% - 32px);text-align:center}
+.toast{position:fixed;left:50%;top:calc(60px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:99px;font-size:13px;z-index:50;max-width:calc(100% - 32px);text-align:center}
 @media (max-height:640px){.dial .v{font-size:30px}.btn{padding:12px}h1{font-size:20px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -367,6 +374,7 @@ function planFor(k){var o=S.time;S.time=k;var p=plan();S.time=o;return p}
 var actx=null,wake=null;
 function beep(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();var o=actx.createOscillator(),g=actx.createGain();o.frequency.value=880;g.gain.value=.08;o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+.25)}catch(e){}}
 function buzz(){try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+function voiceBtn(){return '<button class="pill" data-act="voice" aria-pressed="'+S.voice+'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/>'+(S.voice?'<path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/>':'<path d="M17 9l5 6M22 9l-5 6"/>')+'</svg>'+(S.voice?'음성 안내 켜짐':'음성 안내')+'</button>'}
 function say(t){if(!S.voice)return;try{speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang='ko-KR';speechSynthesis.speak(u)}catch(e){}}
 function keepAwake(on){try{if(on&&navigator.wakeLock){navigator.wakeLock.request('screen').then(function(l){wake=l}).catch(function(){})}else if(!on&&wake){wake.release();wake=null}}catch(e){}}
 
@@ -829,9 +837,11 @@ function vWork(){
   var c=curSet(),e=c.e,g=groups(),gi=g.indexOf(c.id),done=S.sets.filter(function(s){return s.done}).length,gr=GMAP[e.gear],memo=D.memos[e.gear];
   var mine=S.sets.filter(function(s){return s.id===c.id}),mains=mine.filter(function(s){return s.kind==='main'}).length;
   var h='<div class="scene" style="gap:10px">';
-  h+='<div class="top"><button class="pill" data-act="finish">끝내기</button><span class="small muted num"><span>'+(gi+1)+' / '+g.length+'</span> · <span id="clock">'+elapsed()+'</span></span><button class="pill" data-act="voice" aria-pressed="'+S.voice+'">음성 '+(S.voice?'켬':'끔')+'</button></div>';
+  var left=S.sets.length-done;
+  h+='<div class="top"><button class="pill" data-act="finish">끝내기</button><span class="small muted">'+(gi+1)+'번째 운동 / '+g.length+'개</span>'+voiceBtn()+'</div>';
+  h+='<div class="wstat"><div class="now"><span class="wl">'+(c.kind==='warm'?'워밍업':'지금 세트')+'</span><b class="num">'+(c.kind==='warm'?c.no+'<small>/'+mine.filter(function(s){return s.kind==='warm'}).length+'</small>':c.no+'<small>/'+mains+'</small>')+'</b></div><div><span class="wl">남은 세트</span><b class="num">'+left+'<small>개</small></b></div><div><span class="wl">운동 시간</span><b class="num" id="clock">'+elapsed()+'</b></div></div>';
   h+='<div class="progress" aria-hidden="true"><i style="width:'+Math.round(done/S.sets.length*100)+'%"></i></div>';
-  h+='<div class="row between"><div class="setdots" aria-label="세트 진행">'+mine.map(function(s){return '<i class="'+(s.kind==='warm'?'warm ':'')+(s.done?'done':s===c?'cur':'')+'"></i>'}).join('')+'</div><span class="small muted">'+(c.kind==='warm'?'워밍업 '+c.no:c.no+' / '+mains+'세트')+' · 목표 '+repsText(e)+'</span></div>';
+  h+='<div class="row between"><div class="setdots" aria-label="세트 진행">'+mine.map(function(s){return '<i class="'+(s.kind==='warm'?'warm ':'')+(s.done?'done':s===c?'cur':'')+'"></i>'}).join('')+'</div><span class="small muted">목표 '+repsText(e)+'</span></div>';
   h+=placard(c.id,false);
   h+='<div class="btns"><button class="btn ghost sm" data-act="exinfo" data-id="'+c.id+'">사용법'+(gr?' · 내 세팅':'')+'</button><button class="btn ghost sm" data-act="talt">다른 운동으로</button></div>';
   if(memo)h+='<div class="memo"><b>내 세팅</b><span>'+esc(memo)+'</span></div>';
@@ -851,7 +861,7 @@ function restLeft(){return Math.max(0,Math.ceil((S.restEnd-Date.now())/1000))}
 function fmtRest(){var s=restLeft();return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 function vRest(){
   var n=curSet();
-  var h='<div class="scene"><div class="top"><span class="eyebrow">휴식</span><button class="pill" data-act="voice" aria-pressed="'+S.voice+'">음성 '+(S.voice?'켬':'끔')+'</button></div>';
+  var h='<div class="scene"><div class="top"><span class="eyebrow">휴식</span>'+voiceBtn()+'</div>';
   h+='<div class="grow" style="display:flex;flex-direction:column;justify-content:center;gap:18px"><div class="ring"><svg viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="88" fill="none" stroke="var(--surface-2)" stroke-width="12"/><circle id="arc" cx="100" cy="100" r="88" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="552.9" stroke-dashoffset="0"/></svg><div class="t"><span class="v" id="rt">'+fmtRest()+'</span><span class="small muted">물 한 모금, 호흡 정리</span></div></div>';
   h+='<div class="btns"><button class="btn sec sm" data-act="rest" data-d="-30">−30초</button><button class="btn sec sm" data-act="rest" data-d="30">+30초</button></div>';
   if(n)h+='<div class="card row" style="gap:12px">'+thumb(n.e)+'<div><div class="small muted">다음 · '+(n.kind==='warm'?'워밍업 '+n.no:n.no+'세트')+'</div><div class="nm">'+n.e.n+'</div><div class="num" style="font-size:20px;font-weight:600">'+fmtSet(n.e,n.w,n.reps)+'</div></div></div>';
@@ -940,7 +950,7 @@ function vMe(){
   h+='<button class="mrow" data-act="go" data-s="prog" data-from="me"><span><span class="nm">내 프로그램</span><br><span class="meta">'+D.prog.map(function(x){return x.name}).join(' · ')+' · 주 '+D.settings.freq+'회 · '+D.settings.minutes+'분</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="go" data-s="gear"><span><span class="nm">내 헬스장 기구</span><br><span class="meta">'+D.gearOn.length+'개 사용 · 세팅 메모 '+Object.keys(D.memos).length+'개</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="data"><span><span class="nm">내 데이터 · 백업</span><br><span class="meta">운동 '+D.history.length+'회 기록 · 이 폰 안에만 저장돼요</span></span><span class="chev">›</span></button>';
-  return h+'</div><p class="small faint" style="margin-top:auto;text-align:center">짐코치 테스트 버전 0.1.1</p></div>';
+  return h+'</div><p class="small faint" style="margin-top:auto;text-align:center">짐코치 테스트 버전 0.1.2</p></div>';
 }
 function sheetData(){
   var h='<h2>내 데이터 · 백업</h2><p class="small muted">기록은 이 폰의 브라우저 안에만 있어요. 브라우저 데이터를 지우거나 폰을 바꾸면 사라지니 가끔 백업 파일을 저장해 두세요.</p>';
@@ -1043,7 +1053,11 @@ function render(){
   app.className='app'+(full?' full':'');
   switch(S.screen){case 'onb':v=vOnb();break;case 'check':v=vCheck();break;case 'preview':v=vPreview();break;case 'work':v=vWork();break;case 'rest':v=vRest();break;case 'done':v=vDone();break;case 'prog':v=vProg();break;case 'gear':v=vGear();break;
     default:v=S.tab==='today'?vHome():S.tab==='rec'?vRecords():vMe()}
+  var key=S.screen+'|'+S.tab+'|'+S.onb+'|'+S.gearCat+'|'+S.pday+'|'+S.recView,keep=[];
+  if(key===render.last)app.querySelectorAll('.scroll').forEach(function(el){keep.push(el.scrollTop)});
   app.innerHTML=v;
+  if(keep.length){var els=app.querySelectorAll('.scroll');keep.forEach(function(st,i){if(els[i])els[i].scrollTop=st})}
+  render.last=key;
   dock.hidden=full;
   if(!full)dock.innerHTML='<nav class="tabs" aria-label="메뉴">'+tab('today','오늘',I.today)+tab('rec','기록',I.rec)+tab('me','내 정보',I.me)+'</nav><div class="ad" role="complementary" aria-label="광고"><b>AD</b>광고 자리 (테스트 버전) · 운동 중에는 나오지 않아요</div>';
 }
@@ -1092,7 +1106,13 @@ document.addEventListener('click',function(ev){
   else if(a==='sgoal'){S.draft.goal=t.dataset.v;openSheet(sheetSettings())}
   else if(a==='scau'){var cl=S.draft.caution,v=t.dataset.v;if(v==='기타'){S.draft.etcOn=!S.draft.etcOn;if(!S.draft.etcOn)S.draft.cautionEtc=''}else{var k2=cl.indexOf(v);if(k2>=0)cl.splice(k2,1);else cl.push(v)}openSheet(sheetSettings())}
   else if(a==='sapply'){D.settings=S.draft;D.prog=generate(D.settings);D.nextDay=0;S.pday=0;S.time=D.settings.minutes<=30?'short':D.settings.minutes>=60?'long':'normal';save();closeSheet();render();toast('새 기준으로 다시 추천했어요')}
-  else if(a==='voice'){S.voice=!S.voice;render();if(S.voice)say('음성 코칭을 켰어요')}
+  else if(a==='voice'){
+    if(!('speechSynthesis' in window)){S.voice=false;render();toast('이 브라우저에서는 음성 안내를 쓸 수 없어요');return}
+    S.voice=!S.voice;render();
+    if(S.voice){say('음성 안내를 켰어요. 세트마다 운동과 무게를 읽어드릴게요.');var vs=[];try{vs=speechSynthesis.getVoices()}catch(e){}
+      toast(vs.length&&!vs.some(function(x){return /^ko/i.test(x.lang)})?'이 폰에 한국어 음성이 없어서 안내가 안 들릴 수 있어요':'음성 안내를 켰어요 · 안 들리면 폰 음량을 확인하세요');
+      if(S.screen==='work')setTimeout(announce,3500)}
+    else{try{speechSynthesis.cancel()}catch(e){}toast('음성 안내를 껐어요')}}
   else if(a==='adj'){var c=curSet(),fd=t.dataset.f,dd=+t.dataset.d;if(fd==='w')c.w=Math.max(c.e.assist?0:c.e.step,c.w+dd*c.e.step);else c.reps=Math.max(1,c.reps+dd*(c.e.sec?5:1));render()}
   else if(a==='done'){S.askFeel=true;render()}
   else if(a==='feel'){
