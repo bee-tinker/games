@@ -294,7 +294,8 @@ function generate(st){
   var keys=FREQK[st.freq]||['A','B'];
   return keys.map(function(k){
     var used=[],items=[];
-    TPL[k].slots.forEach(function(c){for(var i=0;i<c.length;i++){if(used.indexOf(c[i])<0&&ok(c[i],st)){used.push(c[i]);items.push({id:c[i],sets:k==='R'?2:baseSets(st),edited:false});break}}});
+    TPL[k].slots.forEach(function(c){var got=false;for(var i=0;i<c.length;i++){if(used.indexOf(c[i])<0&&ok(c[i],st)){used.push(c[i]);items.push({id:c[i],sets:k==='R'?2:baseSets(st),edited:false});got=true;break}}
+      if(!got)for(var j=0;j<c.length;j++){var e=LIB[c[j]];if(used.indexOf(c[j])<0&&hasGear(e.gear)&&e.lvl!==2&&!items.some(function(x){return LIB[x.id].part===e.part})){used.push(c[j]);items.push({id:c[j],sets:Math.max(1,baseSets(st)-1),edited:false,careful:true});break}}});
     return {key:k,name:TPL[k].name,items:items};
   });
 }
@@ -349,12 +350,14 @@ function plan(){
   return today().items.map(function(it,idx){
     var e=LIB[it.id],n=Math.max(1,it.sets+adj),note='',rv=REC[e.rec];
     if(adapting())n=Math.min(n,2);
+    var hurt=it.careful?e.cau.filter(function(c){return cauOf(D.settings).indexOf(c)>=0}):[];
+    if(hurt.length)note=hurt.join('·')+' 조심 · 가볍게, 아프면 멈추기';
     if(rv<50){n=0;note=e.rec+' 회복 '+rv+'% · 오늘은 쉬어요'}else if(rv<80){n=Math.max(1,n-1);note=e.rec+' 회복 '+rv+'% · 1세트 줄임'}
     if(pct===80&&n>1)n--;
     var w=0,b=baseW(it.id);
-    if(e.step){var f=pct>=100?1:pct===80?0.9:0.6;w=e.assist?roundTo(b*(2-f),e.step):roundTo(b*f,e.step)}
+    if(e.step){var f=(pct>=100?1:pct===80?0.9:0.6)*(hurt.length?0.8:1);w=e.assist?roundTo(b*(2-f),e.step):roundTo(b*f,e.step)}
     var warm=[];if(idx===0&&w>=20&&!e.assist)[0.4,0.6].forEach(function(r){var v=roundTo(w*r,e.step);if(v<w&&warm.indexOf(v)<0)warm.push(v)});
-    return {id:it.id,e:e,n:n,w:w,note:note,warm:warm,first:isFirst(it.id)&&!!e.step};
+    return {id:it.id,e:e,n:n,w:w,note:note,warm:warm,first:isFirst(it.id)&&!!e.step,hurt:hurt};
   });
 }
 function minutes(p){var s=0;p.forEach(function(x){s+=x.n+x.warm.length});return Math.round(s*2.3+10)}
@@ -768,7 +771,7 @@ function vOnb(){
   }else{
     var keep=D.gearOn;D.gearOn=o.gearOn;var pg=generate(st);D.gearOn=keep;S.oprog=pg;
     h+='<h1>내 플랜이 준비됐어요</h1><p class="small muted">주 '+st.freq+'회 · '+st.minutes+'분 · '+st.goal+(o.exp==='처음'?' · 첫 6번은 적응 기간':'')+'</p><div class="card grow scroll">';
-    pg.forEach(function(d){h+='<h3 style="margin:4px 0">'+d.name+'</h3><div class="list">'+d.items.map(function(it){var e=LIB[it.id];return '<div class="item">'+thumb(e)+'<span><span class="nm">'+e.n+'</span><br><span class="meta">'+it.sets+'세트 · '+repsText(e)+'</span></span><span></span></div>'}).join('')+'</div>'});
+    pg.forEach(function(d){h+='<h3 style="margin:4px 0">'+d.name+'</h3><div class="list">'+d.items.map(function(it){var e=LIB[it.id];return '<div class="item">'+thumb(e)+'<span><span class="nm">'+e.n+'</span><br><span class="meta">'+it.sets+'세트 · '+repsText(e)+'</span>'+(it.careful?'<br><span class="note">조심해서 가볍게</span>':'')+'</span><span></span></div>'}).join('')+'</div>'});
     h+='</div><p class="small faint">운동이 마음에 안 들면 나중에 언제든 바꿀 수 있어요.</p>'+next('시작하기');
   }
   return h+'</div>';
@@ -815,7 +818,7 @@ function vPreview(){
 // ===== 장면: 운동 중 =====
 function startWorkout(){
   var sets=[];
-  plan().forEach(function(x){if(!x.n)return;x.warm.forEach(function(w,j){sets.push({id:x.id,e:x.e,kind:'warm',no:j+1,w:w,reps:10})});for(var s=1;s<=x.n;s++)sets.push({id:x.id,e:x.e,kind:'main',no:s,w:x.w,reps:x.e.reps[1],first:x.first})});
+  plan().forEach(function(x){if(!x.n)return;x.warm.forEach(function(w,j){sets.push({id:x.id,e:x.e,kind:'warm',no:j+1,w:w,reps:10})});for(var s=1;s<=x.n;s++)sets.push({id:x.id,e:x.e,kind:'main',no:s,w:x.w,reps:x.e.reps[1],first:x.first,hurt:x.hurt})});
   S.pct=intensity();S.sets=sets;S.cur=0;S.start=Date.now();S.screen='work';S.askFeel=false;keepAwake(true);announce();render();
 }
 function curSet(){return S.sets[S.cur]}
@@ -833,7 +836,8 @@ function vWork(){
   h+='<div class="btns"><button class="btn ghost sm" data-act="exinfo" data-id="'+c.id+'">사용법'+(gr?' · 내 세팅':'')+'</button><button class="btn ghost sm" data-act="talt">다른 운동으로</button></div>';
   if(memo)h+='<div class="memo"><b>내 세팅</b><span>'+esc(memo)+'</span></div>';
   if(!S.askFeel){
-    if(c.first&&c.kind==='main'&&c.no===1)h+='<p class="small" style="text-align:center;color:var(--info)">처음 하는 운동이에요. 가볍게 15회가 되면 + 로 무게를 올리세요.</p>';
+    if(c.hurt&&c.hurt.length&&c.no===1)h+='<p class="small" style="text-align:center;color:var(--warn)">'+c.hurt.join('·')+'에 부담이 있는 운동이에요. 가볍게 하고, 아프면 바로 멈추세요.</p>';
+    else if(c.first&&c.kind==='main'&&c.no===1)h+='<p class="small" style="text-align:center;color:var(--info)">처음 하는 운동이에요. 가볍게 15회가 되면 + 로 무게를 올리세요.</p>';
     h+='<div class="dial">';
     h+=e.step?'<div><button data-act="adj" data-f="w" data-d="-1" aria-label="무게 줄이기">−</button><div><div class="v num">'+c.w+'</div><div class="u">'+(e.assist?'보조 kg':'kg')+'</div></div><button data-act="adj" data-f="w" data-d="1" aria-label="무게 늘리기">+</button></div>':'<div style="display:flex;justify-content:center"><div><div class="v num" style="font-size:26px">맨몸</div><div class="u">무게 없음</div></div></div>';
     h+='<div><button data-act="adj" data-f="reps" data-d="-1" aria-label="횟수 줄이기">−</button><div><div class="v num">'+c.reps+'</div><div class="u">'+(e.sec?'초':'회')+'</div></div><button data-act="adj" data-f="reps" data-d="1" aria-label="횟수 늘리기">+</button></div></div>';
