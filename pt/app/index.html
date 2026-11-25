@@ -883,6 +883,7 @@ function vDone(){
   var h='<div class="scene"><div><div class="eyebrow">운동 완료 · 기록을 저장했어요</div><h1>수고했어요!</h1></div>';
   h+='<div class="stats"><div class="stat"><b class="num">'+r.mins+'</b><span>분</span></div><div class="stat"><b class="num">'+r.sets+'</b><span>세트</span></div><div class="stat"><b class="num">'+r.vol.toLocaleString('ko-KR')+'</b><span>볼륨 kg</span></div></div>';
   h+='<div class="card grow scroll"><h3 style="margin-bottom:4px">다음 운동은 이렇게</h3>';
+  if(!r.res.length)h+='<p class="small muted" style="margin-top:8px">오늘은 워밍업만 하고 끝냈어요. 본 세트 기록이 없어서 다음 운동의 무게는 그대로예요.</p>';
   r.res.forEach(function(x){var e=x.e,msg;
     if(x.kind==='up')msg=e.assist?'<span class="arrow">보조 '+x.cur+'→'+x.next+'kg</span>':'<span class="arrow">'+x.cur+'→'+x.next+'kg ↑</span>';
     else if(x.kind==='down')msg='<span class="note">'+x.next+'kg으로 낮춰 다시</span>';
@@ -939,7 +940,7 @@ function vMe(){
   h+='<button class="mrow" data-act="go" data-s="prog" data-from="me"><span><span class="nm">내 프로그램</span><br><span class="meta">'+D.prog.map(function(x){return x.name}).join(' · ')+' · 주 '+D.settings.freq+'회 · '+D.settings.minutes+'분</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="go" data-s="gear"><span><span class="nm">내 헬스장 기구</span><br><span class="meta">'+D.gearOn.length+'개 사용 · 세팅 메모 '+Object.keys(D.memos).length+'개</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="data"><span><span class="nm">내 데이터 · 백업</span><br><span class="meta">운동 '+D.history.length+'회 기록 · 이 폰 안에만 저장돼요</span></span><span class="chev">›</span></button>';
-  return h+'</div><p class="small faint" style="margin-top:auto;text-align:center">짐코치 테스트 버전 0.1</p></div>';
+  return h+'</div><p class="small faint" style="margin-top:auto;text-align:center">짐코치 테스트 버전 0.1.1</p></div>';
 }
 function sheetData(){
   var h='<h2>내 데이터 · 백업</h2><p class="small muted">기록은 이 폰의 브라우저 안에만 있어요. 브라우저 데이터를 지우거나 폰을 바꾸면 사라지니 가끔 백업 파일을 저장해 두세요.</p>';
