@@ -9,6 +9,7 @@
   --fg:#eef0f3; --muted:#9aa1ac; --faint:#6b727d;
   --accent:#ff8a3d; --accent-ink:#1f1006; --accent-soft:rgba(255,138,61,.14);
   --good:#4cc38a; --warn:#e8b341; --bad:#e5534b; --info:#6aa9ff;
+  --skin:#3c434e; --fig:#d3d8df; --fig-far:#858d99; --eq:#454c57; --eq-2:#5a626e;
   --f-text:'IBM Plex Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   --f-num:'Barlow Semi Condensed','IBM Plex Sans KR',system-ui,sans-serif;
   --r:14px;
@@ -114,6 +115,11 @@ p{margin:0}
 .pill[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
 .progress{height:4px;background:var(--surface-2);border-radius:4px;overflow:hidden}
 .progress i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.figbox{aspect-ratio:5/4;max-width:100%;border-radius:14px;background:radial-gradient(120% 90% at 50% 35%,var(--surface-2),var(--surface) 75%);overflow:hidden;position:relative}
+.figbox svg{width:100%;height:100%;display:block}
+.figcap{position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.figcap i{width:9px;height:9px;border-radius:3px;background:var(--accent);display:inline-block}
+.thumb svg{width:100%;height:100%}
 .photo{aspect-ratio:4/3;max-width:100%;border:1.5px dashed var(--line);border-radius:12px;display:grid;place-items:center;text-align:center;color:var(--faint);font-size:13px;background:var(--surface-2);overflow:hidden}
 .photo.has{border:0}
 .photo img{width:100%;height:100%;object-fit:cover;display:block}
@@ -200,22 +206,21 @@ p{margin:0}
 'use strict';
 
 // ===== 우리 헬스장 기구 (사진으로 확인한 목록) =====
-// photo/usage 는 시안 페이지에만 있는 사진. 저장소 사본에서는 사진 자리로 보임.
 var GEAR = [
-  {id:'lp_pin',n:'레그프레스 (핀 머신)',cat:'하체',photo:'photos/lp_pin.jpg',usage:'photos/lp_pin_u.jpg'},
-  {id:'lp_45',n:'45도 레그프레스 (원판)',cat:'하체',photo:'photos/lp_45.jpg'},
-  {id:'leg_ext',n:'레그 익스텐션',cat:'하체',photo:'photos/leg_ext.jpg'},
+  {id:'lp_pin',n:'레그프레스 (핀 머신)',cat:'하체'},
+  {id:'lp_45',n:'45도 레그프레스 (원판)',cat:'하체'},
+  {id:'leg_ext',n:'레그 익스텐션',cat:'하체'},
   {id:'leg_curl',n:'레그 컬',cat:'하체'},
-  {id:'adductor',n:'이너 타이',cat:'하체',usage:'photos/adductor_u.jpg'},
-  {id:'chest_press',n:'시티드 체스트 프레스',cat:'가슴',photo:'photos/chest_press.jpg'},
-  {id:'incline',n:'인클라인 프레스',cat:'가슴',photo:'photos/incline.jpg'},
-  {id:'pec_deck',n:'펙덱 플라이',cat:'가슴',photo:'photos/pec_deck.jpg'},
-  {id:'lat_pd',n:'랫풀다운 · 어시스트 친업',cat:'등',photo:'photos/lat_pd.jpg'},
-  {id:'cable',n:'케이블 머신',cat:'등',photo:'photos/cable.jpg'},
-  {id:'tbar',n:'티바 로우',cat:'등',photo:'photos/tbar.jpg'},
+  {id:'adductor',n:'이너 타이',cat:'하체'},
+  {id:'chest_press',n:'시티드 체스트 프레스',cat:'가슴'},
+  {id:'incline',n:'인클라인 프레스',cat:'가슴'},
+  {id:'pec_deck',n:'펙덱 플라이',cat:'가슴'},
+  {id:'lat_pd',n:'랫풀다운 · 어시스트 친업',cat:'등'},
+  {id:'cable',n:'케이블 머신',cat:'등'},
+  {id:'tbar',n:'티바 로우',cat:'등'},
   {id:'sh_press',n:'숄더 프레스 머신',cat:'어깨'},
-  {id:'arm_curl',n:'암컬 머신',cat:'팔',photo:'photos/arm_curl.jpg',usage:'photos/arm_curl_u.jpg'},
-  {id:'smith',n:'스미스 머신 · 파워랙',cat:'프리웨이트',photo:'photos/smith.jpg'},
+  {id:'arm_curl',n:'암컬 머신',cat:'팔'},
+  {id:'smith',n:'스미스 머신 · 파워랙',cat:'프리웨이트'},
   {id:'db',n:'덤벨',cat:'프리웨이트'},
   {id:'bench',n:'벤치 (플랫·각도 조절)',cat:'프리웨이트'},
   {id:'back_ext',n:'백 익스텐션',cat:'코어'},
@@ -298,9 +303,8 @@ function recColor(v){return v>=80?'var(--good)':v>=50?'var(--warn)':'var(--bad)'
 function today(){return D.prog[0]}
 function repsText(e){return e.reps[0]+'~'+e.reps[1]+(e.sec?'초':'회')}
 function fmtSet(e,w,reps){if(e.sec)return reps+'초';if(!e.step)return '맨몸 × '+reps+'회';return (e.assist?'보조 ':'')+w+'kg × '+reps+'회'}
-function photoOf(e){var g=GMAP[e.gear];return g&&g.photo}
-function img(src,alt){return '<img alt="'+esc(alt||'')+'" src="'+src+'" onerror="this.remove()">'}
-function thumb(e){var p=photoOf(e);return '<span class="thumb">'+(p?img(p):(e.step?I.machine:I.mat))+'</span>'}
+function thumb(e){return '<span class="thumb">'+fig(e.id,1)+'</span>'}
+function figBox(id,cap){var m=(FIG[id]&&FIG[id].m||[]).map(function(k){return MN[k]}).join(' · ');return '<div class="figbox" data-fig="'+id+'" data-anim="1">'+fig(id,0)+'</div>'+(cap!==false&&m?'<div class="row small muted" style="margin-top:-4px"><i class="dot" style="background:var(--accent)"></i>쓰는 근육: '+m+'</div>':'')}
 
 function plan(){
   var pct=intensity(),adj={short:-1,normal:0,long:1}[S.time];
@@ -335,10 +339,158 @@ var I={
   mat:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 17h18M5 17c0-3 3-6 7-6s7 3 7 6"/><circle cx="12" cy="7" r="2.5"/></svg>'
 };
 
-// ===== 근육 그림 =====
+// ===== 인체도 (부위별 회복 상태) =====
+// 오른쪽 절반만 그리고 좌우 반전해서 붙임. [회복 부위 또는 null(피부), 경로]
 function f(p){return recColor(REC[p])}
-function bodyFront(){return '<svg viewBox="0 0 100 200" role="img" aria-label="앞모습 근육 회복 상태"><circle cx="50" cy="16" r="10" fill="var(--surface-2)"/><rect x="44" y="26" width="12" height="8" rx="3" fill="var(--surface-2)"/><ellipse cx="29" cy="42" rx="9" ry="7" fill="'+f('어깨')+'"/><ellipse cx="71" cy="42" rx="9" ry="7" fill="'+f('어깨')+'"/><rect x="35" y="36" width="14" height="20" rx="5" fill="'+f('가슴')+'"/><rect x="51" y="36" width="14" height="20" rx="5" fill="'+f('가슴')+'"/><rect x="18" y="50" width="9" height="42" rx="4.5" fill="'+f('팔')+'"/><rect x="73" y="50" width="9" height="42" rx="4.5" fill="'+f('팔')+'"/><rect x="39" y="58" width="22" height="34" rx="6" fill="'+f('코어')+'"/><rect x="36" y="96" width="28" height="10" rx="4" fill="var(--surface-2)"/><rect x="36" y="108" width="12" height="44" rx="6" fill="'+f('하체 앞')+'"/><rect x="52" y="108" width="12" height="44" rx="6" fill="'+f('하체 앞')+'"/><rect x="38" y="156" width="9" height="36" rx="4.5" fill="var(--surface-2)"/><rect x="53" y="156" width="9" height="36" rx="4.5" fill="var(--surface-2)"/></svg>'}
-function bodyBack(){return '<svg viewBox="0 0 100 200" role="img" aria-label="뒷모습 근육 회복 상태"><circle cx="50" cy="16" r="10" fill="var(--surface-2)"/><rect x="44" y="26" width="12" height="8" rx="3" fill="var(--surface-2)"/><ellipse cx="29" cy="42" rx="9" ry="7" fill="'+f('어깨')+'"/><ellipse cx="71" cy="42" rx="9" ry="7" fill="'+f('어깨')+'"/><path d="M35 36h30l-3 50H38z" fill="'+f('등')+'"/><rect x="18" y="50" width="9" height="42" rx="4.5" fill="'+f('팔')+'"/><rect x="73" y="50" width="9" height="42" rx="4.5" fill="'+f('팔')+'"/><rect x="36" y="90" width="28" height="18" rx="7" fill="'+f('엉덩이')+'"/><rect x="36" y="110" width="12" height="42" rx="6" fill="'+f('햄스트링')+'"/><rect x="52" y="110" width="12" height="42" rx="6" fill="'+f('햄스트링')+'"/><rect x="38" y="156" width="9" height="36" rx="4.5" fill="var(--surface-2)"/><rect x="53" y="156" width="9" height="36" rx="4.5" fill="var(--surface-2)"/></svg>'}
+var BF=[
+  ['등','M66 33 C70 37 74 40 79 42 L64 42 Z'],
+  ['어깨','M66 42 C76 37 86 41 88 53 C89 60 86 64 82 64 C80 56 76 50 70 46 Z'],
+  ['가슴','M60.6 44 L70 46 C76 50 80 56 80 64 C76 70 68 72 60.6 70 Z'],
+  ['팔','M81 65 C85 62 89 66 90 74 C91 82 89 88 85 90 C82 86 80 78 81 65 Z'],
+  ['팔','M85 92 C89 90 93 96 94 106 C95 114 93 120 91 122 L87 122 C85 112 84 102 85 92 Z'],
+  [null,'M87 123 C91 122 94 125 94 130 C94 135 91 137 89 136 C87 133 86 127 87 123 Z'],
+  ['코어','M61 72 L69.5 72 L69.5 80 L61 80 Z'],['코어','M61 82 L69.5 82 L69.5 90 L61 90 Z'],['코어','M61 92 L69.5 92 L69 100 L61 100 Z'],['코어','M61 102 L68.5 102 C67 110 64 116 61 118 Z'],
+  ['코어','M71.5 72 C76 70 80 74 80 82 C80 92 78 100 74 106 L71 104 L71.5 92 Z'],
+  [null,'M61 120 C66 115 72 109 76 107 C78 111 77 115 74 119 C70 125 65 129 61 131 Z'],
+  ['하체 앞','M63 126 C70 119 76 115 79 117 C83 127 83 145 80 158 C78 166 74 170 70 170 C66 166 64 158 63 150 C62 141 62 133 63 126 Z'],
+  [null,'M66 172 C70 170 76 169 78 172 C78 176 74 180 70 180 C67 180 65 176 66 172 Z'],
+  ['하체 앞','M67 182 C72 180 77 182 78 190 C79 202 76 214 73 222 L69 222 C66 212 65 196 67 182 Z'],
+  [null,'M68 224 L74 224 C77 227 80 230 80 233 C77 235 70 235 67 233 C67 229 67 226 68 224 Z']
+];
+var BB=[
+  ['어깨','M66 42 C76 37 86 41 88 53 C89 60 86 64 82 64 C80 56 76 50 70 46 Z'],
+  ['팔','M81 63 C86 62 90 68 90 76 C90 84 88 88 85 90 C82 84 80 74 81 63 Z'],
+  ['팔','M85 92 C89 90 93 96 94 106 C95 114 93 120 91 122 L87 122 C85 112 84 102 85 92 Z'],
+  [null,'M87 123 C91 122 94 125 94 130 C94 135 91 137 89 136 C87 133 86 127 87 123 Z'],
+  ['등','M61 66 L67 50 L78 47 C80 53 80 58 78 62 L66 70 L61 72 Z'],
+  ['등','M62 75 L78 65 C81 73 80 85 76 95 C72 101 66 104 61 104 L61 76 Z'],
+  ['코어','M61 106 C66 106 72 103 76 99 C78 105 77 111 74 115 L61 117 Z'],
+  ['엉덩이','M61 119 L74 117 C80 121 82 129 80 137 C78 143 70 147 61 145 Z'],
+  ['햄스트링','M62 149 C70 149 78 143 80 141 C83 151 82 161 79 168 C76 172 72 172 69 170 C65 164 63 156 62 149 Z'],
+  [null,'M66 172 C70 171 76 170 78 173 C78 177 74 180 70 180 C67 180 65 176 66 172 Z'],
+  ['햄스트링','M67 182 C73 178 79 184 79 194 C79 204 76 210 72 212 C68 210 66 200 66 190 Z'],
+  [null,'M69 213 L74 213 L74.5 222 L69 222 Z'],
+  [null,'M68 224 L74 224 C77 227 80 230 80 233 C77 235 70 235 67 233 C67 229 67 226 68 224 Z']
+];
+function bodyMap(back){
+  var half=(back?BB:BF).map(function(m){return '<path d="'+m[1]+'" fill="'+(m[0]?f(m[0]):'var(--skin)')+'"'+(m[0]?' fill-opacity=".9"':'')+'/>'}).join('');
+  var center='<ellipse cx="60" cy="17" rx="10" ry="12" fill="var(--skin)"/><path d="M54 28 L66 28 L66.5 39 L53.5 39 Z" fill="var(--skin)"/>';
+  if(back)center+='<path d="M54 29 L66 29 L80 41 L68 46 L60 64 L52 46 L40 41 Z" fill="'+f('등')+'" fill-opacity=".9"/>';
+  else center+='<path d="M60 118 L60 104" stroke="none"/>';
+  return '<svg viewBox="16 2 88 236" role="img" aria-label="'+(back?'뒷모습':'앞모습')+' 근육 회복 상태"><g stroke="var(--surface)" stroke-width="1.2" stroke-linejoin="round">'+center+half+'<g transform="translate(120 0) scale(-1 1)">'+half+'</g></g></svg>';
+}
+function bodyFront(){return bodyMap(false)}
+function bodyBack(){return bodyMap(true)}
+
+// ===== 운동 동작 그림 (직접 그린 사람 그림 + 쓰는 근육 표시) =====
+// 자세는 엉덩이 위치, 몸통 각도, 손·발 목표점으로 정하고 팔다리는 관절 계산(IK)으로 그림. a→b 사이를 반복 재생.
+var MN={quads:'허벅지 앞',hams:'허벅지 뒤',inner:'허벅지 안쪽',calves:'종아리',glutes:'엉덩이',chest:'가슴',abs:'복근',lats:'등',lowback:'허리',delts:'어깨',biceps:'이두',triceps:'삼두',forearm:'전완'};
+var SEAT=[{k:'l',p:[64,112,102,112],w:9},{k:'l',p:[73,108,71,52],w:9},{k:'l',p:[58,142,150,142],w:4},{k:'l',p:[86,116,86,142],w:5}];
+var FIG={
+  lp_pin:{eq:[{k:'l',p:[30,142,168,142],w:4},{k:'l',p:[50,114,96,114],w:9},{k:'l',p:[58,112,34,64],w:9},{k:'plate',at:'A',f:1}],a:{hip:[70,106],t:-115,hand:[86,114],foot:[124,78]},b:{hip:[70,106],t:-115,hand:[86,114],foot:[144,80]},m:['quads','glutes']},
+  lp_45:{eq:[{k:'l',p:[96,142,178,56],w:4},{k:'l',p:[90,128,40,100],w:9},{k:'l',p:[40,142,150,142],w:4},{k:'plate45',at:'A',f:1}],a:{hip:[82,124],t:-152,hand:[94,130],foot:[112,92],toe:-130},b:{hip:[82,124],t:-152,hand:[94,130],foot:[136,70],toe:-130},m:['quads','glutes']},
+  goblet:{g:1,eq:[{k:'db',at:'W',f:1,v:1}],a:{hip:[100,74],t:-90,hand:[114,44],foot:[103,144]},b:{hip:[86,104],t:-60,hand:[124,74],foot:[103,144]},m:['quads','glutes']},
+  leg_ext:{eq:SEAT.concat([{k:'pad',at:'A',off:[4,1],r:6,f:1}]),a:{hip:[82,102],t:-95,hand:[94,114],foot:[120,138]},b:{hip:[82,102],t:-95,hand:[94,114],foot:[156,96]},m:['quads']},
+  leg_curl:{eq:SEAT.concat([{k:'pad',at:'K',off:[-8,-9],r:5,f:1},{k:'pad',at:'A',off:[-3,7],r:6,f:1}]),a:{hip:[82,102],t:-95,hand:[94,114],foot:[156,100]},b:{hip:[82,102],t:-95,hand:[94,114],foot:[112,138]},m:['hams','calves']},
+  db_rdl:{g:1,eq:[{k:'db',at:'W',f:1}],a:{hip:[100,74],t:-90,hand:[104,80],foot:[102,144]},b:{hip:[84,80],t:-14,hand:[128,122],foot:[102,144]},m:['hams','glutes','lowback']},
+  adductor:{eq:SEAT.concat([{k:'pad',at:'K',off:[2,7],r:6,f:1}]),a:{hip:[84,102],t:-95,hand:[96,114],foot:[124,138]},b:{hip:[84,102],t:-95,hand:[96,114],foot:[126,134]},m:['inner']},
+  back_ext:{eq:[{k:'l',p:[50,146,104,98],w:6},{k:'c',p:[108,95],r:8},{k:'c',p:[52,145],r:6,f:1}],a:{hip:[100,86],t:72,tilt:0,hr:[10,-6],foot:[50,136]},b:{hip:[100,86],t:-42,hr:[8,10],foot:[50,136]},m:['lowback','glutes','hams']},
+  glute_br:{g:1,eq:[],a:{hip:[92,138],t:180,tilt:0,hand:[74,147],foot:[122,145]},b:{hip:[92,116],t:150,tilt:30,hand:[74,147],foot:[122,145]},m:['glutes','hams']},
+  chest_press:{eq:SEAT.concat([{k:'h',at:'W',f:1}]),a:{hip:[84,104],t:-92,hand:[100,66],foot:[114,142]},b:{hip:[84,104],t:-92,hand:[134,64],foot:[114,142]},m:['chest','triceps','delts']},
+  incline:{eq:[{k:'l',p:[64,114,102,114],w:9},{k:'l',p:[80,112,52,62],w:9},{k:'l',p:[58,142,150,142],w:4},{k:'h',at:'W',f:1}],a:{hip:[82,108],t:-118,hand:[74,56],foot:[116,142]},b:{hip:[82,108],t:-118,hand:[92,26],foot:[116,142]},m:['chest','delts','triceps']},
+  pec_deck:{eq:SEAT.concat([{k:'h',at:'W',f:1}]),a:{hip:[84,104],t:-92,hand:[64,64],foot:[114,142]},b:{hip:[84,104],t:-92,hand:[116,62],foot:[114,142]},m:['chest','delts']},
+  pushup:{g:1,eq:[],a:{hip:[96,126],t:-14,hand:[134,148],foot:[36,146]},b:{hip:[96,126],t:-38,hand:[134,148],foot:[36,146]},m:['chest','triceps']},
+  lat_pd:{eq:[{k:'l',p:[70,110,104,110],w:9},{k:'l',p:[150,6,150,142],w:6},{k:'l',p:[92,6,150,6],w:5},{k:'l',p:[60,142,160,142],w:4},{k:'cable',at:'W',to:[96,6]},{k:'h',at:'W',f:1},{k:'pad',at:'K',off:[-4,-10],r:5,f:1}],a:{hip:[86,104],t:-100,hand:[90,14],foot:[118,142]},b:{hip:[86,104],t:-100,hand:[98,58],foot:[118,142]},m:['lats','biceps']},
+  assist_chin:{eq:[{k:'l',p:[150,4,150,146],w:6},{k:'l',p:[96,8,150,8],w:5},{k:'shinpad',f:1},{k:'c',p:[100,9],r:4,f:1}],a:{hip:[96,112],t:-90,hand:[100,10],fr:[-36,38]},b:{hip:[96,88],t:-90,hand:[100,10],fr:[-36,38]},m:['lats','biceps']},
+  cable_row:{eq:[{k:'l',p:[46,125,98,125],w:8},{k:'l',p:[150,106,150,138],w:5},{k:'c',p:[172,127],r:5},{k:'l',p:[40,142,178,142],w:4},{k:'cable',at:'W',to:[172,127]},{k:'h',at:'W',f:1}],a:{hip:[72,118],t:-78,hand:[126,100],foot:[146,118]},b:{hip:[72,118],t:-95,hand:[100,94],foot:[146,118]},m:['lats','biceps','delts']},
+  db_row:{g:1,eq:[{k:'l',p:[118,108,178,108],w:8},{k:'l',p:[124,110,124,148],w:4},{k:'l',p:[172,110,172,148],w:4},{k:'db',at:'W',f:1}],a:{hip:[72,84],t:-10,hand:[116,128],foot:[76,144],fh:[150,104]},b:{hip:[72,84],t:-10,hand:[102,98],foot:[76,144],fh:[150,104]},m:['lats','biceps']},
+  tbar:{g:1,eq:[{k:'l',p:[78,114,114,88],w:8},{k:'h',at:'W',f:1}],a:{hip:[70,100],t:-35,hand:[112,128],foot:[62,144]},b:{hip:[70,100],t:-35,hand:[100,100],foot:[62,144]},m:['lats','biceps']},
+  sh_press:{eq:SEAT.concat([{k:'h',at:'W',f:1}]),a:{hip:[84,104],t:-92,hand:[94,56],foot:[114,142]},b:{hip:[84,104],t:-92,hand:[86,10],foot:[114,142]},m:['delts','triceps']},
+  db_lateral:{g:1,eq:[{k:'db',at:'W',f:1}],a:{hip:[100,74],t:-90,hand:[104,80],foot:[102,144]},b:{hip:[100,74],t:-90,hand:[148,36],foot:[102,144]},m:['delts']},
+  rear_delt:{eq:[{k:'l',p:[64,112,102,112],w:9},{k:'l',p:[98,102,100,60],w:9},{k:'l',p:[58,142,150,142],w:4},{k:'h',at:'W',f:1}],a:{hip:[84,104],t:-90,hand:[134,62],foot:[114,142]},b:{hip:[84,104],t:-90,hand:[38,66],foot:[114,142]},m:['delts','lats']},
+  arm_curl:{eq:[{k:'l',p:[54,114,90,114],w:9},{k:'l',p:[86,88,114,102],w:8},{k:'l',p:[50,142,140,142],w:4},{k:'l',p:[100,106,100,142],w:5},{k:'h',at:'W',f:1}],a:{hip:[70,108],t:-80,hand:[126,100],foot:[102,144]},b:{hip:[70,108],t:-80,hand:[96,52],foot:[102,144]},m:['biceps','forearm']},
+  pushdown:{g:1,eq:[{k:'l',p:[150,2,150,146],w:6},{k:'cable',at:'W',to:[128,4]},{k:'h',at:'W',f:1}],a:{hip:[96,74],t:-88,hand:[118,46],foot:[98,144]},b:{hip:[96,74],t:-88,hand:[100,82],foot:[98,144]},m:['triceps']},
+  plank:{g:1,eq:[],a:{hip:[100,124],t:-8,hand:[168,146],foot:[30,146]},b:{hip:[100,121],t:-8,hand:[168,146],foot:[30,146]},m:['abs','delts']},
+  deadbug:{g:1,eq:[],a:{hip:[104,134],t:180,tilt:0,hand:[64,88],foot:[138,104],fh:[64,88],ff:[138,104]},b:{hip:[104,134],t:180,tilt:0,hand:[16,126],foot:[174,128],fh:[64,88],ff:[138,104]},m:['abs']},
+  decline_crunch:{eq:[{k:'l',p:[36,126,146,92],w:8},{k:'l',p:[60,130,60,146],w:4},{k:'l',p:[130,100,130,146],w:4},{k:'c',p:[142,98],r:5,f:1}],a:{hip:[96,108],t:162,tilt:0,hr:[4,-8],foot:[136,100]},b:{hip:[96,108],t:-118,tilt:8,hr:[12,-2],foot:[136,100]},m:['abs']}
+};
+var LEN={t:44,u:27,f:25,th:38,sh:37};
+function dv(a){var r=a*Math.PI/180;return [Math.cos(r),Math.sin(r)]}
+function mv(p,a,l){var d=dv(a);return [p[0]+d[0]*l,p[1]+d[1]*l]}
+function ik(A,T,l1,l2,s){var dx=T[0]-A[0],dy=T[1]-A[1],d=Math.hypot(dx,dy);d=Math.max(Math.abs(l1-l2)+1,Math.min(d,l1+l2-0.3));var a=Math.atan2(dy,dx),c=(l1*l1+d*d-l2*l2)/(2*l1*d);c=Math.max(-1,Math.min(1,c));var al=Math.acos(c),j=[A[0]+l1*Math.cos(a+s*al),A[1]+l1*Math.sin(a+s*al)],ex=T[0]-j[0],ey=T[1]-j[1],el=Math.hypot(ex,ey)||1;return [j,[j[0]+ex/el*l2,j[1]+ey/el*l2]]}
+function lerp(a,b,t){if(a==null)return b;if(b==null)return a;if(typeof a==='number')return a+(b-a)*t;return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t]}
+function poseAt(F,t){var o={},k;for(k in F.a)o[k]=lerp(F.a[k],F.b[k],t);for(k in F.b)if(!(k in o))o[k]=F.b[k];return o}
+function joints(p){
+  var H=p.hip,S=mv(H,p.t,LEN.t),C=mv(S,p.t+(p.tilt||0),15),N=mv(S,p.t,4);
+  var hand=p.hand||[S[0]+p.hr[0],S[1]+p.hr[1]],foot=p.foot||[H[0]+p.fr[0],H[1]+p.fr[1]];
+  var hs=p.hb!=null?p.hb:(hand[0]>=S[0]?1:-1),arm=ik(S,hand,LEN.u,LEN.f,hs),leg=ik(H,foot,LEN.th,LEN.sh,p.fb==null?-1:p.fb);
+  var o=[-3,-2],fS=[S[0]+o[0],S[1]+o[1]],fH=[H[0]+o[0],H[1]+o[1]];
+  var fh=p.fh||[hand[0]+o[0],hand[1]+o[1]],ff=p.ff||[foot[0]+o[0],foot[1]+o[1]];
+  var farm=ik(fS,fh,LEN.u,LEN.f,p.hb!=null?p.hb:(fh[0]>=fS[0]?1:-1)),fleg=ik(fH,ff,LEN.th,LEN.sh,p.fb==null?-1:p.fb);
+  return {H:H,S:S,C:C,N:N,E:arm[0],W:arm[1],K:leg[0],A:leg[1],fS:fS,fH:fH,fE:farm[0],fW:farm[1],fK:fleg[0],fA:fleg[1],toe:p.toe};
+}
+function P(p){return p[0].toFixed(1)+' '+p[1].toFixed(1)}
+function ln(a,b,w,c,extra){return '<line x1="'+a[0].toFixed(1)+'" y1="'+a[1].toFixed(1)+'" x2="'+b[0].toFixed(1)+'" y2="'+b[1].toFixed(1)+'" stroke="'+c+'" stroke-width="'+w+'" stroke-linecap="round"'+(extra||'')+'/>'}
+function band(a,b,side,f0,f1,w,off){var dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,nx=uy*side*off,ny=-ux*side*off;return ln([a[0]+dx*f0+nx,a[1]+dy*f0+ny],[a[0]+dx*f1+nx,a[1]+dy*f1+ny],w,'var(--accent)')}
+function toePt(A,K,ov){var ang=ov!=null?ov:Math.atan2(A[1]-K[1],A[0]-K[0])*180/Math.PI-90;return mv(A,ang,10)}
+function limbs(J,far){
+  var c=far?'var(--fig-far)':'var(--fig)',S=far?J.fS:J.S,H=far?J.fH:J.H,E=far?J.fE:J.E,W=far?J.fW:J.W,K=far?J.fK:J.K,A=far?J.fA:J.A;
+  return {leg:ln(H,K,13,c)+ln(K,A,10,c)+ln(A,toePt(A,K,J.toe),6,c),arm:ln(S,E,10,c)+ln(E,W,8,c)+'<circle cx="'+W[0].toFixed(1)+'" cy="'+W[1].toFixed(1)+'" r="4.2" fill="'+c+'"/>'};
+}
+function eqDraw(list,J,front){
+  var h='',ec='var(--eq-2)';
+  list.forEach(function(q){
+    if(!!q.f!==front)return;
+    if(q.k==='l')h+=ln([q.p[0],q.p[1]],[q.p[2],q.p[3]],q.w,'var(--eq)');
+    else if(q.k==='c')h+='<circle cx="'+q.p[0]+'" cy="'+q.p[1]+'" r="'+q.r+'" fill="'+ec+'"/>';
+    else if(q.k==='pad'){var b=J[q.at];h+='<circle cx="'+(b[0]+q.off[0]).toFixed(1)+'" cy="'+(b[1]+q.off[1]).toFixed(1)+'" r="'+q.r+'" fill="'+ec+'"/>'}
+    else if(q.k==='plate'){var A=J.A;h+=ln([A[0]+7,A[1]-22],[A[0]+7,A[1]+14],6,ec)}
+    else if(q.k==='plate45'){var A2=J.A,u=dv(50);h+=ln([A2[0]+4-u[0]*18,A2[1]-3-u[1]*18],[A2[0]+4+u[0]*14,A2[1]-3+u[1]*14],6,ec)}
+    else if(q.k==='db'){var W=J.W;h+=q.v?ln([W[0]+2,W[1]-8],[W[0]+2,W[1]+6],7,ec):ln([W[0]-7,W[1]+1],[W[0]+7,W[1]+1],7,ec)}
+    else if(q.k==='h'){var W2=J.W;h+='<circle cx="'+W2[0].toFixed(1)+'" cy="'+W2[1].toFixed(1)+'" r="5.5" fill="none" stroke="'+ec+'" stroke-width="3"/>'}
+    else if(q.k==='cable')h+=ln(J.W,q.to,1.5,'var(--eq-2)');
+    else if(q.k==='shinpad')h+=ln([J.K[0],J.K[1]+8],[J.A[0],J.A[1]+8],7,ec);
+  });
+  return h;
+}
+function fig(id,t){
+  var F=FIG[id];if(!F)return I.machine;
+  var J=joints(poseAt(F,t)),near=limbs(J,false),far=limbs(J,true),m=F.m||[],has=function(k){return m.indexOf(k)>=0};
+  var h='<svg viewBox="0 0 200 160" role="img" aria-label="'+(LIB[id]?LIB[id].n:'')+' 동작 그림">';
+  if(F.g)h+=ln([18,151],[182,151],2,'var(--line)');
+  h+=eqDraw(F.eq,J,false);
+  h+=far.arm+far.leg;
+  // 몸통 · 골반 · 목 · 머리
+  var tl=[J.H[0]+(J.S[0]-J.H[0])*0.12,J.H[1]+(J.S[1]-J.H[1])*0.12],tu=[J.H[0]+(J.S[0]-J.H[0])*0.92,J.H[1]+(J.S[1]-J.H[1])*0.92];
+  h+=ln(tl,tu,22,'var(--fig)')+'<circle cx="'+J.H[0].toFixed(1)+'" cy="'+J.H[1].toFixed(1)+'" r="10" fill="var(--fig)"/>'+ln(J.S,J.N,8,'var(--fig)');
+  if(has('chest'))h+=band(J.H,J.S,-1,0.55,0.85,9,5.5);
+  if(has('abs'))h+=band(J.H,J.S,-1,0.15,0.5,8,6);
+  if(has('lats'))h+=band(J.H,J.S,1,0.4,0.85,9,5.5);
+  if(has('lowback'))h+=band(J.H,J.S,1,0.1,0.38,8,6);
+  if(has('glutes')){var dx=J.S[0]-J.H[0],dy=J.S[1]-J.H[1],L=Math.hypot(dx,dy);h+='<circle cx="'+(J.H[0]+dy/L*5).toFixed(1)+'" cy="'+(J.H[1]-dx/L*5).toFixed(1)+'" r="6.5" fill="var(--accent)"/>'}
+  h+='<circle cx="'+J.C[0].toFixed(1)+'" cy="'+J.C[1].toFixed(1)+'" r="9.5" fill="var(--fig)"/>';
+  h+=near.leg;
+  if(has('quads'))h+=band(J.H,J.K,1,0.2,0.85,6,3.5);
+  if(has('hams'))h+=band(J.H,J.K,-1,0.2,0.85,6,3.5);
+  if(has('inner'))h+=band(J.H,J.K,1,0.3,0.85,5,0);
+  if(has('calves'))h+=band(J.K,J.A,-1,0.15,0.6,5,2.5);
+  h+=eqDraw(F.eq.filter(function(q){return q.k==='pad'||q.k==='plate'||q.k==='plate45'||q.k==='shinpad'||q.k==='c'}),J,true);
+  h+=near.arm;
+  if(has('biceps'))h+=band(J.S,J.E,1,0.25,0.85,5,2.5);
+  if(has('triceps'))h+=band(J.S,J.E,-1,0.25,0.85,5,2.5);
+  if(has('forearm'))h+=band(J.E,J.W,0,0.2,0.7,4.5,0);
+  if(has('delts'))h+='<circle cx="'+J.S[0].toFixed(1)+'" cy="'+J.S[1].toFixed(1)+'" r="6" fill="var(--accent)"/>';
+  h+=eqDraw(F.eq.filter(function(q){return q.k==='db'||q.k==='h'}),J,true);
+  return h+'</svg>';
+}
+var reduceMotion=false;try{reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+function animTick(ts){
+  var t=reduceMotion?1:(1-Math.cos(ts/2600*2*Math.PI))/2;
+  var els=document.querySelectorAll('[data-anim]');
+  for(var i=0;i<els.length;i++){try{els[i].innerHTML=fig(els[i].dataset.fig,t)}catch(e){}}
+  requestAnimationFrame(animTick);
+}
+requestAnimationFrame(animTick);
 
 // ===== 주간 바 =====
 function week(){
@@ -448,13 +600,13 @@ function elapsed(){var s=Math.floor((Date.now()-S.start)/1000);return Math.floor
 function memoOf(e){return D.memos[e.gear]||''}
 
 function vWork(){
-  var c=curSet(),e=c.e,g=groups(),gi=g.indexOf(c.id),done=S.sets.filter(function(s){return s.done}).length,ph=photoOf(e),gr=GMAP[e.gear],memo=memoOf(e);
+  var c=curSet(),e=c.e,g=groups(),gi=g.indexOf(c.id),done=S.sets.filter(function(s){return s.done}).length,gr=GMAP[e.gear],memo=memoOf(e);
   var h='<div class="stack">';
   h+='<div class="topbar"><button class="pill" data-act="finish">끝내기</button><span class="num muted" id="clock">'+elapsed()+'</span><button class="pill" data-act="voice" aria-pressed="'+S.voice+'">음성 '+(S.voice?'켜짐':'꺼짐')+'</button></div>';
   h+='<div class="progress" aria-hidden="true"><i style="width:'+Math.round(done/S.sets.length*100)+'%"></i></div>';
   h+='<div class="row between"><span class="eyebrow">'+(gi+1)+' / '+g.length+' 운동 · '+e.part+'</span><span class="eyebrow">목표 '+repsText(e)+'</span></div>';
   h+='<h1>'+e.n+'</h1>';
-  h+='<div class="photo'+(ph?' has':'')+'">'+(ph?img(ph,gr.n+' 사진'):'<div>'+I.cam+'<br>'+(gr?gr.n+' 사진 자리':'기구 없이 하는 운동')+'</div>')+'</div>';
+  h+=figBox(c.id);
   if(gr)h+='<button class="memo" data-act="memo" data-g="'+e.gear+'"><b>내 세팅</b><span class="'+(memo?'':'muted')+'">'+(memo?esc(memo):'의자 높이·핀 위치를 적어두세요')+'</span></button>';
   h+='<div class="btns"><button class="btn ghost" data-act="exinfo" data-id="'+c.id+'">사용법 · 자세</button><button class="btn ghost" data-act="talt">다른 운동으로 대체</button></div>';
   h+='<div class="sets">';
@@ -528,34 +680,34 @@ function vRecords(){
 
 // ===== 내 정보 =====
 function vMe(){
-  var withPhoto=GEAR.filter(function(g){return g.photo}),rest=GEAR.filter(function(g){return !g.photo});
+  var main=GEAR.filter(function(g){return firstEx(g.id)}),rest=GEAR.filter(function(g){return !firstEx(g.id)});
   var h='<div class="stack"><h1>내 정보</h1>';
   h+='<section class="card stack"><div class="row between"><h2>내 프로그램</h2><button class="link" data-act="openprog">보기 · 수정</button></div><div class="ex-meta">'+D.prog.map(function(x){return x.name+' '+x.items.length+'개'}).join(' · ')+' · 주 '+D.settings.freq+'회 · '+D.settings.minutes+'분</div></section>';
   h+='<section class="stack"><div class="row between"><h2>우리 헬스장 기구</h2><span class="muted small">'+(GEAR.length+D.extraGear.length)+'개</span></div><div class="gear">';
-  withPhoto.forEach(function(g){h+=gearCard(g)});
+  main.forEach(function(g){h+=gearCard(g)});
   D.extraGear.forEach(function(g,i){h+='<div class="g"><span class="ph">'+(g.img?'<img alt="" src="'+g.img+'">':I.machine)+'</span><span class="nm">'+esc(g.nm)+'</span><span class="meta">직접 추가</span></div>'});
-  h+='<button class="g add" data-act="addgear">'+I.cam+'<span>기구 추가</span><span class="meta">사진 2장 + 메모</span></button></div>';
-  h+='<p class="muted small">사진이 아직 없는 기구</p><div class="gear-more">'+rest.map(function(g){return '<button class="mini" data-act="gearinfo" data-g="'+g.id+'">'+g.n+'</button>'}).join('')+'</div></section>';
+  h+='<button class="g add" data-act="addgear">'+I.cam+'<span>기구 추가</span><span class="meta">종류 고르기 + 메모</span></button></div>';
+  h+='<p class="muted small">그 밖의 기구</p><div class="gear-more">'+rest.map(function(g){return '<button class="mini" data-act="gearinfo" data-g="'+g.id+'">'+g.n+'</button>'}).join('')+'</div></section>';
   h+='<section class="card stack"><h2>내 데이터</h2><div class="ex-meta">모든 기록과 사진은 이 폰 안에만 저장돼요. 폰을 바꿀 때를 대비해 한 달에 한 번 백업하세요.</div><div class="btns"><button class="btn sec sm" data-act="toast" data-msg="백업 파일 만들기는 1차 버전에서 연결돼요">백업 내보내기</button><button class="btn sec sm" data-act="toast" data-msg="백업 불러오기는 1차 버전에서 연결돼요">불러오기</button></div></section></div>';
   return h;
 }
-function gearCard(g){var m=D.memos[g.id];return '<button class="g" data-act="gearinfo" data-g="'+g.id+'"><span class="ph">'+(g.photo?img(g.photo,g.n):I.machine)+'</span><span class="nm">'+g.n+'</span><span class="meta">사진 '+((g.photo?1:0)+(g.usage?1:0))+'/2 · '+(m?'메모 있음':'메모 없음')+'</span></button>'}
+function firstEx(gid){var k=Object.keys(LIB).filter(function(k){return LIB[k].gear===gid&&FIG[k]});return k[0]}
+function usesOf(gid){return Object.keys(LIB).filter(function(k){return LIB[k].gear===gid})}
+function gearCard(g){var m=D.memos[g.id],n=usesOf(g.id).length;return '<button class="g" data-act="gearinfo" data-g="'+g.id+'"><span class="ph">'+fig(firstEx(g.id),1)+'</span><span class="nm">'+g.n+'</span><span class="meta">운동 '+n+'가지 · '+(m?'세팅 메모 있음':'메모 없음')+'</span></button>'}
 
 // ===== 시트 =====
 function sheetEx(id){
   var e=LIB[id],g=GMAP[e.gear];
   var h='<h2>'+e.n+'</h2><div class="muted small" style="margin-bottom:10px">'+e.part+' · '+repsText(e)+' · '+(g?g.n:'기구 없이')+'</div><div class="stack">';
-  if(g&&g.usage)h+='<div class="photo has">'+img(g.usage,'사용법 안내판')+'</div>';
-  else if(g&&g.photo)h+='<div class="photo has">'+img(g.photo,g.n)+'</div>';
+  h+=figBox(id);
   h+='<div><h3 style="margin-bottom:6px">자세 포인트</h3><ol class="tips">'+e.tips.map(function(t){return '<li>'+t+'</li>'}).join('')+'</ol></div>';
   if(g)h+=memoField(e.gear);
   return h+'<button class="btn sec" data-act="close">닫기</button></div>';
 }
 function sheetGear(gid){
-  var g=GMAP[gid],uses=Object.keys(LIB).filter(function(k){return LIB[k].gear===gid});
+  var g=GMAP[gid],uses=usesOf(gid);
   var h='<h2>'+g.n+'</h2><div class="muted small" style="margin-bottom:10px">'+g.cat+'</div><div class="stack">';
-  h+='<div class="photo'+(g.photo?' has':'')+'">'+(g.photo?img(g.photo,g.n):'<div>'+I.cam+'<br>전체 사진이 아직 없어요</div>')+'</div>';
-  h+='<div class="photo'+(g.usage?' has':'')+'">'+(g.usage?img(g.usage,'사용법 안내판'):'<div>'+I.cam+'<br>사용법 안내판 사진 자리</div>')+'</div>';
+  if(firstEx(gid))h+=figBox(firstEx(gid));
   h+=memoField(gid);
   if(uses.length)h+='<div><h3 style="margin-bottom:6px">이 기구로 하는 운동</h3><div class="chips">'+uses.map(function(k){return '<button data-act="exinfo" data-id="'+k+'">'+LIB[k].n+'</button>'}).join('')+'</div></div>';
   return h+'<button class="btn sec" data-act="close">닫기</button></div>';
@@ -563,10 +715,9 @@ function sheetGear(gid){
 function memoField(gid){return '<div><h3 style="margin-bottom:6px">내 세팅 메모</h3><div class="row"><input id="f-memo" class="field" data-g="'+gid+'" placeholder="예: 의자 4번, 등받이 2칸" value="'+esc(D.memos[gid]||'')+'"><button class="mini" data-act="savememo" data-g="'+gid+'" style="padding:12px">저장</button></div></div>'}
 function sheetAddGear(){
   var g=S.newGear,kinds=GEAR.map(function(x){return x.n});
-  var h='<h2>기구 추가</h2><p class="muted small" style="margin:4px 0 12px">사진은 이 폰 안에만 저장돼요.</p><div class="steps">';
-  h+='<div class="stepc"><span class="k">1</span><div class="stack" style="gap:6px"><b>기구 전체 사진</b>'+(g.photo?'<div class="photo has"><img alt="찍은 기구 사진" src="'+g.photo+'"></div>':'')+'<label class="filebtn">'+I.cam+(g.photo?'다시 찍기':'사진 찍기 또는 고르기')+'<input id="f-photo" type="file" accept="image/*" capture="environment" data-slot="photo"></label></div></div>';
-  h+='<div class="stepc"><span class="k">2</span><div class="stack" style="gap:6px"><b>사용법 안내판 사진 <span class="muted" style="font-weight:400">(선택)</span></b>'+(g.usage?'<div class="photo has"><img alt="찍은 사용법 사진" src="'+g.usage+'"></div>':'')+'<label class="filebtn">'+I.cam+(g.usage?'다시 찍기':'안내판 찍기')+'<input id="f-usage" type="file" accept="image/*" capture="environment" data-slot="usage"></label><span class="muted" style="font-size:12px">2차 버전에서는 안내판 글자를 읽어 기구 이름을 먼저 골라줘요.</span></div></div>';
-  h+='<div class="stepc"><span class="k">3</span><div class="stack" style="gap:6px"><b>어떤 기구인가요?</b><div class="chips">'+kinds.concat(['기타']).map(function(k){return '<button data-act="kind" data-k="'+k+'" aria-pressed="'+(g.kind===k)+'">'+k+'</button>'}).join('')+'</div></div></div>';
+  var h='<h2>기구 추가</h2><p class="muted small" style="margin:4px 0 12px">안내판 사진은 글자를 읽는 데만 쓰고, 이 폰 안에만 저장돼요.</p><div class="steps">';
+  h+='<div class="stepc"><span class="k">1</span><div class="stack" style="gap:6px"><b>어떤 기구인가요?</b><span class="muted" style="font-size:12px">고르면 그 기구로 하는 운동 그림이 자동으로 붙어요.</span><div class="chips">'+kinds.concat(['기타']).map(function(k){return '<button data-act="kind" data-k="'+k+'" aria-pressed="'+(g.kind===k)+'">'+k+'</button>'}).join('')+'</div></div></div>';
+  h+='<div class="stepc"><span class="k">2</span><div class="stack" style="gap:6px"><b>안내판 사진 <span class="muted" style="font-weight:400">(선택)</span></b>'+(g.usage?'<div class="photo has"><img alt="찍은 사용법 사진" src="'+g.usage+'"></div>':'')+'<label class="filebtn">'+I.cam+(g.usage?'다시 찍기':'안내판 찍기')+'<input id="f-usage" type="file" accept="image/*" capture="environment" data-slot="usage"></label><span class="muted" style="font-size:12px">2차 버전에서는 안내판 글자를 읽어 기구 이름을 먼저 골라줘요.</span></div></div>';
   h+='</div><button class="btn pri" data-act="savegear" style="margin-top:14px"'+(g.kind?'':' disabled')+'>'+(g.kind?g.kind+' 저장':'기구 종류를 골라주세요')+'</button>';
   return h;
 }
