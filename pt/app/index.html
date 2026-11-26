@@ -243,7 +243,7 @@ h3{font-size:15px;margin:0;font-weight:600}
 var GEAR=[
   {id:'lp_pin',n:'레그프레스 (핀 머신)',cat:'하체'},{id:'lp_45',n:'45도 레그프레스',cat:'하체'},{id:'leg_ext',n:'레그 익스텐션',cat:'하체'},{id:'leg_curl',n:'레그 컬',cat:'하체'},{id:'adductor',n:'이너 타이',cat:'하체'},
   {id:'chest_press',n:'시티드 체스트 프레스',cat:'가슴'},{id:'incline',n:'인클라인 프레스',cat:'가슴'},{id:'pec_deck',n:'펙덱 플라이',cat:'가슴'},
-  {id:'lat_pd',n:'랫풀다운 · 어시스트 친업',cat:'등'},{id:'cable',n:'케이블 머신',cat:'등'},{id:'tbar',n:'티바 로우',cat:'등'},
+  {id:'lat_pd',n:'랫풀다운',cat:'등'},{id:'chin_ast',n:'어시스트 친업',cat:'등'},{id:'cable',n:'케이블 머신',cat:'등'},{id:'tbar',n:'티바 로우',cat:'등'},
   {id:'sh_press',n:'숄더 프레스 머신',cat:'어깨·팔'},{id:'arm_curl',n:'암컬 머신',cat:'어깨·팔'},
   {id:'smith',n:'스미스 머신 · 파워랙',cat:'기타'},{id:'db',n:'덤벨',cat:'기타'},{id:'bench',n:'벤치 (플랫·각도 조절)',cat:'기타'},{id:'back_ext',n:'백 익스텐션',cat:'기타'},{id:'decline',n:'디클라인 싯업 벤치',cat:'기타'},{id:'treadmill',n:'러닝머신',cat:'유산소'},{id:'stairs',n:'계단 (스텝밀)',cat:'유산소'},{id:'bike',n:'실내 자전거',cat:'유산소'}
 ];
@@ -266,7 +266,7 @@ var LIB = {
   pec_deck:{n:'펙덱 플라이',part:'가슴',rec:'가슴',gear:'pec_deck',step:5,reps:[12,15],cau:['어깨'],tips:['팔꿈치를 살짝 굽힌 채 고정','가슴으로 모은다는 느낌','뒤로 너무 벌리지 않기']},
   pushup:{n:'무릎 대고 푸시업',part:'가슴',rec:'가슴',gear:'body',step:0,reps:[8,12],cau:['어깨'],tips:['손은 어깨보다 조금 넓게','몸통을 일직선','가슴이 바닥 가까이']},
   lat_pd:{n:'랫풀다운',part:'등',rec:'등',gear:'lat_pd',step:5,reps:[10,12],cau:[],tips:['무릎 패드로 몸을 고정','가슴 쪽으로 당기기','팔꿈치를 옆구리로 내린다는 느낌']},
-  assist_chin:{n:'어시스트 친업',part:'등',rec:'등',gear:'lat_pd',step:5,reps:[6,10],assist:true,cau:['어깨'],tips:['보조 무게가 클수록 쉬워요','무릎을 패드에 올리고 시작','턱이 손잡이 높이까지']},
+  assist_chin:{n:'어시스트 친업',part:'등',rec:'등',gear:'chin_ast',step:5,reps:[6,10],assist:true,cau:['어깨'],tips:['보조 무게가 클수록 쉬워요','무릎을 패드에 올리고 시작','턱이 손잡이 높이까지']},
   cable_row:{n:'케이블 시티드 로우',part:'등',rec:'등',gear:'cable',step:5,reps:[10,12],cau:[],tips:['낮은 도르래에 V 손잡이 걸기','가슴을 펴고 배꼽 쪽으로 당기기','어깨 으쓱하지 않기']},
   db_row:{n:'원암 덤벨 로우',part:'등',rec:'등',gear:'db',step:2,reps:[10,12],cau:[],tips:['한 손과 한 무릎을 벤치에','등을 평평하게','덤벨을 엉덩이 쪽으로 당기기']},
   tbar:{n:'티바 로우',part:'등',rec:'등',gear:'tbar',step:5,reps:[10,12],lvl:2,cau:['허리'],tips:['가슴을 패드에 붙이기','팔꿈치를 뒤로','반동 없이']},
@@ -327,6 +327,9 @@ function load(){try{var t=localStorage.getItem(KEY);return t?JSON.parse(t):null}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요')}}
 var D=load();
 if(!D||D.v!==1)D=blank();
+// 0.1.6: 랫풀다운과 어시스트 친업을 다른 기구로 나눔. 예전 기록은 친업 기구도 켜둔 채로 옮기고 한 번 알려줌
+function migrate(o){var m=false;if(o.gearOn&&o.gearOn.indexOf('chin_ast')<0&&!o.chinSplit){if(o.gearOn.indexOf('lat_pd')>=0){o.gearOn.push('chin_ast');m=o.onboarded}}o.chinSplit=1;return m}
+var MIGRATED=migrate(D);if(MIGRATED)save();
 if(!D.prog)D.prog=generate(D.settings);
 var REC={};RECK.forEach(function(k){REC[k]=100});
 var S={tab:'today',screen:D.onboarded?'home':'onb',onb:0,time:'normal',cond:{sleep:4,sore:3,mood:3},voice:false,sets:[],cur:0,start:0,restEnd:0,restTotal:90,askFeel:false,pday:0,draft:null,newGear:{kind:null,usage:null},addFilter:'전체',recView:'cal',gearCat:'하체',result:null,recEx:null,confirmReset:false};
@@ -968,7 +971,7 @@ function vMe(){
   h+='<button class="mrow" data-act="go" data-s="prog" data-from="me"><span><span class="nm">내 프로그램</span><br><span class="meta">'+D.prog.map(function(x){return x.name}).join(' · ')+' · 주 '+D.settings.freq+'회 · '+D.settings.minutes+'분</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="go" data-s="gear"><span><span class="nm">내 헬스장 기구</span><br><span class="meta">'+D.gearOn.length+'개 사용 · 세팅 메모 '+Object.keys(D.memos).length+'개</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="data"><span><span class="nm">내 데이터 · 백업</span><br><span class="meta">운동 '+D.history.length+'회 기록 · 이 폰 안에만 저장돼요</span></span><span class="chev">›</span></button>';
-  return h+'</div><p class="small faint" style="margin-top:auto;text-align:center">짐코치 테스트 버전 0.1.5</p></div>';
+  return h+'</div><p class="small faint" style="margin-top:auto;text-align:center">짐코치 테스트 버전 0.1.6</p></div>';
 }
 function sheetData(){
   var h='<h2>내 데이터 · 백업</h2><p class="small muted">기록은 이 폰의 브라우저 안에만 있어요. 브라우저 데이터를 지우거나 폰을 바꾸면 사라지니 가끔 백업 파일을 저장해 두세요.</p>';
@@ -1172,12 +1175,13 @@ document.addEventListener('click',function(ev){
   else if(a==='toast'){toast(t.dataset.msg)}
 });
 document.addEventListener('change',function(ev){var inp=ev.target;if(!inp.dataset||!inp.dataset.slot||!inp.files||!inp.files[0])return;
-  if(inp.dataset.slot==='import'){var fr=new FileReader();fr.onload=function(){try{var o=JSON.parse(fr.result);if(!o||o.v!==1||!Array.isArray(o.history))throw 0;D=o;save();closeSheet();S.screen='home';S.tab='today';render();toast('백업을 불러왔어요 · 운동 '+D.history.length+'회')}catch(e){toast('짐코치 백업 파일이 아니에요')}};fr.readAsText(inp.files[0]);return}
+  if(inp.dataset.slot==='import'){var fr=new FileReader();fr.onload=function(){try{var o=JSON.parse(fr.result);if(!o||o.v!==1||!Array.isArray(o.history))throw 0;migrate(o);D=o;save();closeSheet();S.screen='home';S.tab='today';render();toast('백업을 불러왔어요 · 운동 '+D.history.length+'회')}catch(e){toast('짐코치 백업 파일이 아니에요')}};fr.readAsText(inp.files[0]);return}
   S.newGear.usage=true;openSheet(sheetAddGear());toast('안내판 사진은 2차 버전에서 쓰여요')});
 document.addEventListener('input',function(ev){var el=ev.target;if(!el.dataset||!el.dataset.etc)return;var st=el.dataset.etc==='od'?S.od.settings:S.draft;st.cautionEtc=el.value;var m=document.getElementById('etc-rec-'+el.dataset.etc);if(m){m.textContent=etcMsg(st);m.style.color=cauEtcTags(st).length?'var(--info)':'var(--faint)'}});
 document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&layer.innerHTML)closeSheet()});
 window.__gcBusy=function(){return S.screen==='work'||S.screen==='rest'};
 render();
+if(MIGRATED)setTimeout(function(){toast('어시스트 친업이 랫풀다운과 다른 기구로 나뉘었어요. 없으면 "내 헬스장 기구"에서 꺼주세요')},600);
 })();
 </script>
 
