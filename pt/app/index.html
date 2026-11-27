@@ -176,7 +176,7 @@ h3{font-size:15px;margin:0;font-weight:600}
 
 /* 기록 */
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:12.5px}
-.cal span{padding:7px 0;border-radius:8px;color:var(--muted)}
+.cal span,.cal button{padding:7px 0;border-radius:8px;color:var(--muted)}
 .cal .h{color:var(--faint)} .cal .w{background:var(--accent-soft);color:var(--accent);font-weight:600} .cal .td{outline:1px solid var(--accent);outline-offset:-1px}
 .bars{display:flex;flex-direction:column;gap:12px}
 .bar{display:grid;grid-template-columns:64px 1fr 44px;gap:8px;align-items:center;font-size:13.5px}
@@ -881,7 +881,7 @@ function vHome(){
   var tired=RECK.filter(function(k){return REC[k]<80});
   var h='<div class="scene">';
   h+='<div><div class="eyebrow">주 '+D.settings.freq+'회 · '+D.settings.goal+' · '+(D.history.length+1)+'번째 운동'+(adapting()?' · 적응 기간':'')+(D.places.length>1?' · '+esc(curPlace().name):'')+'</div><h1>'+dayLabel(now)+'</h1></div>';
-  h+='<div class="week">'+['월','화','수','목','금','토','일'].map(function(d,i){var x=new Date(mon);x.setDate(mon.getDate()+i);var k=ymd(x),cls=doneDates[k]?'done':(k===tdy?'today':'');if(k===tdy&&doneDates[k])cls='today done';return '<div class="day '+cls+'"><span class="d">'+d+'</span><span class="n">'+x.getDate()+'</span><span class="m"></span></div>'}).join('')+'</div>';
+  h+='<div class="week">'+['월','화','수','목','금','토','일'].map(function(d,i){var x=new Date(mon);x.setDate(mon.getDate()+i);var k=ymd(x),cls=doneDates[k]?'done':(k===tdy?'today':'');if(k===tdy&&doneDates[k])cls='today done';return '<button class="day '+cls+'" data-act="dayinfo" data-d="'+k+'" aria-label="'+(x.getMonth()+1)+'월 '+x.getDate()+'일 기록 보기"><span class="d">'+d+'</span><span class="n">'+x.getDate()+'</span><span class="m"></span></button>'}).join('')+'</div>';
   h+='<div class="card grow" style="display:flex;flex-direction:column;gap:8px"><div class="row between"><h2>오늘은 '+t.name+'</h2><span class="tag acc">'+act.length+'가지 · 약 '+minutes(p)+'분</span></div>';
   h+='<div class="bodies grow">'+bodyArt('front',{rec:true})+bodyArt('back',{rec:true})+'</div>';
   h+='<div class="legend"><span><i class="dot" style="background:var(--good)"></i>회복됨</span><span><i class="dot" style="background:var(--warn)"></i>조금 피곤</span><span><i class="dot" style="background:var(--bad)"></i>쉬어야 함</span></div>';
@@ -1045,8 +1045,8 @@ function vRecords(){
     h+='<div class="row between"><h2>'+(m+1)+'월</h2><span class="small muted">운동 '+cnt+'일</span></div><div class="cal">';
     ['월','화','수','목','금','토','일'].forEach(function(d){h+='<span class="h">'+d+'</span>'});
     for(var i=0;i<pad;i++)h+='<span></span>';
-    for(var d=1;d<=days;d++){var k=ymd(new Date(y,m,d));h+='<span class="num '+(set[k]?'w':'')+(k===ymd()?' td':'')+'">'+d+'</span>'}
-    h+='</div><p class="small muted">이번 달 목표 '+(D.settings.freq*4)+'회 중 '+cnt+'회 했어요. 전체 '+D.history.length+'회.</p>';
+    for(var d=1;d<=days;d++){var k=ymd(new Date(y,m,d));h+='<button class="num '+(set[k]?'w':'')+(k===ymd()?' td':'')+'" data-act="dayinfo" data-d="'+k+'" aria-label="'+(m+1)+'월 '+d+'일 기록 보기">'+d+'</button>'}
+    h+='</div><p class="small faint">날짜를 누르면 그날 기록을 볼 수 있어요</p><p class="small muted">이번 달 목표 '+(D.settings.freq*4)+'회 중 '+cnt+'회 했어요. 전체 '+D.history.length+'회.</p>';
   }else if(S.recView==='part'){
     var mon=mondayOf(now).getTime(),cnt2={};RECK.forEach(function(k){cnt2[k]=0});
     D.history.forEach(function(s){if(s.ts<mon)return;s.sets.forEach(function(x){if(x.kind==='main'&&LIB[x.id])cnt2[LIB[x.id].rec]++})});
@@ -1078,7 +1078,27 @@ function vMe(){
   h+='<button class="mrow" data-act="places"><span><span class="nm">운동 장소</span><br><span class="meta">'+esc(curPlace().name)+(D.places.length>1?' 외 '+(D.places.length-1)+'곳':' · 집이나 다른 헬스장도 따로 저장해요')+'</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="go" data-s="gear"><span><span class="nm">'+esc(curPlace().name)+' 기구</span><br><span class="meta">'+D.gearOn.length+'개 사용 · 내 기구 '+D.extraGear.filter(function(g){return !g.gone}).length+'개 · 세팅 메모 '+Object.keys(D.memos).length+'개</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="data"><span><span class="nm">내 데이터 · 백업</span><br><span class="meta">운동 '+D.history.length+'회 기록 · 이 폰 안에만 저장돼요</span></span><span class="chev">›</span></button>';
-  return h+'</div><p class="small faint" style="margin-top:auto;text-align:center">짐코치 테스트 버전 0.1.7</p></div>';
+  return h+'</div><p class="small faint" style="margin-top:auto;text-align:center">짐코치 테스트 버전 0.1.8</p></div>';
+}
+function sheetDay(k){
+  var p=k.split('-'),dt=new Date(+p[0],+p[1]-1,+p[2]),ss=D.history.filter(function(x){return x.date===k});
+  var h='<h2>'+dayLabel(dt)+'</h2>';
+  if(!ss.length){
+    h+='<p class="muted">'+(k>ymd()?'아직 오지 않은 날이에요.':k===ymd()?'오늘은 아직 운동 기록이 없어요. "오늘" 탭에서 시작해요.':'이 날은 운동 기록이 없어요.')+'</p>';
+    return h+'<button class="btn sec" data-act="close">닫기</button>';
+  }
+  ss.forEach(function(x){
+    h+='<div class="card" style="display:flex;flex-direction:column;gap:8px"><div class="row between"><h3>'+esc(x.dayName||'운동')+'</h3><span class="small muted">'+(x.place?esc(x.place)+' · ':'')+x.mins+'분'+(x.pct&&x.pct!==100?' · 강도 '+x.pct+'%':'')+'</span></div>';
+    var order=[],by={};
+    x.sets.forEach(function(st){if(st.kind!=='main')return;if(!by[st.id]){by[st.id]=[];order.push(st.id)}by[st.id].push(st)});
+    order.forEach(function(id){
+      var e=LIB[id];
+      h+='<div><div class="nm" style="font-weight:600">'+(e?esc(e.n):'지운 운동')+'</div><div class="small muted num">'+by[id].map(function(st){return (e?fmtSet(e,st.w,st.reps):st.w+'kg × '+st.reps+'회')+(st.feel==='힘듦'?' (힘듦)':st.feel==='쉬움'?' (쉬움)':'')}).join(' · ')+'</div></div>';
+    });
+    if(!order.length)h+='<p class="small muted">기록된 세트가 없어요.</p>';
+    h+='</div>';
+  });
+  return h+'<button class="btn sec" data-act="close">닫기</button>';
 }
 function sheetData(){
   var h='<h2>내 데이터 · 백업</h2><p class="small muted">기록은 이 폰의 브라우저 안에만 있어요. 브라우저 데이터를 지우거나 폰을 바꾸면 사라지니 가끔 백업 파일을 저장해 두세요.</p>';
@@ -1283,6 +1303,7 @@ document.addEventListener('click',function(ev){
   else if(a==='gdel'){S.delGear=t.dataset.g;openSheet(sheetGear(t.dataset.g))}
   else if(a==='gdelno'){S.delGear=null;openSheet(sheetGear(t.dataset.g))}
   else if(a==='gdelyes'){var dn=GMAP[t.dataset.g]?GMAP[t.dataset.g].n:'기구';delCustom(t.dataset.g);S.delGear=null;save();closeSheet();render();toast(dn+'을(를) 삭제했어요')}
+  else if(a==='dayinfo'){openSheet(sheetDay(t.dataset.d))}
   else if(a==='places'){S.delPlace=null;openSheet(sheetPlaces())}
   else if(a==='prename'){var pi2=document.getElementById('f-pname'),pv=(pi2&&pi2.value||'').trim().slice(0,16);if(!pv)return;if(D.places.some(function(x){return x.id!==D.placeId&&x.name===pv})){toast('같은 이름의 장소가 있어요');return}curPlace().name=pv;save();openSheet(sheetPlaces());render();toast('이름을 바꿨어요')}
   else if(a==='placeuse'){switchPlace(t.dataset.id);S.delPlace=null;openSheet(sheetPlaces());render();toast(curPlace().name+'(으)로 바꿨어요')}
