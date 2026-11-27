@@ -349,6 +349,7 @@ function ensureData(){
   if(!Array.isArray(D.gearOn))D.gearOn=[];
   if(!Array.isArray(D.extraGear))D.extraGear=[];
   D.memos=D.memos||{};D.weights=D.weights||{};
+  if(!D.body||!Array.isArray(D.body.log))D.body={h:(D.body&&D.body.h)||null,log:[]};
   if(!D.chinSplit){
     if(D.gearOn.indexOf('lat_pd')>=0&&D.gearOn.indexOf('chin_ast')<0)D.gearOn.push('chin_ast');
     D.chinSplit=1;
@@ -362,6 +363,23 @@ function ensureData(){
   if(!Array.isArray(D.places)||!D.places.length){D.places=[{id:'p1',name:'내 헬스장'}];D.placeId='p1'}
   if(!D.places.some(function(p){return p.id===D.placeId}))D.placeId=D.places[0].id;
 }
+// ===== 몸무게 · 키 · BMI (기록은 이 폰 안에만) =====
+function bmiOf(kg,h){return kg&&h?kg/Math.pow(h/100,2):null}
+// 대한비만학회 기준(아시아-태평양)
+function bmiCat(b){return b<18.5?'저체중':b<23?'정상':b<25?'과체중':b<30?'비만 1단계':b<35?'비만 2단계':'비만 3단계'}
+function bmiCol(b){return b<18.5||b>=23&&b<25?'var(--info)':b>=25?'var(--warn)':'var(--good)'}
+function lastBody(){var l=D.body.log;return l.length?l[l.length-1]:null}
+function bodyOn(d){return D.body.log.filter(function(x){return x.date===d})[0]}
+function fmtKg(v){return (Math.round(v*10)/10).toFixed(1)}
+function daysAgo(d){var p=d.split('-'),a=new Date(+p[0],+p[1]-1,+p[2]),n=new Date();n=new Date(n.getFullYear(),n.getMonth(),n.getDate());return Math.round((n-a)/86400000)}
+function bmiBox(kg,h){
+  var b=bmiOf(kg,h);
+  if(!h)return '<span class="muted">키를 적으면 BMI를 알려드려요</span>';
+  if(!b||!isFinite(b))return '<span class="muted">몸무게를 적어주세요</span>';
+  var m=h/100;
+  return '<div class="row between"><span class="small muted">BMI</span><span><b class="num" style="font-size:22px">'+b.toFixed(1)+'</b> <span style="color:'+bmiCol(b)+';font-weight:600">'+bmiCat(b)+'</span></span></div><p class="small faint" style="margin-top:4px">키 '+h+'cm 기준 정상 체중은 '+fmtKg(18.5*m*m)+'~'+fmtKg(22.9*m*m)+'kg예요. 근육이 많으면 BMI가 높게 나올 수 있어 참고만 하세요.</p>';
+}
+function parseNum(v){var n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:null}
 // 장소: 지금 쓰는 장소의 기구·프로그램은 D.gearOn·D.prog에 있고, 다른 장소의 것은 그 장소 안에 보관한다
 function curPlace(){return D.places.filter(function(p){return p.id===D.placeId})[0]}
 function placeGearN(p){return (p.id===D.placeId?D.gearOn:(p.gearOn||[])).length}
@@ -396,7 +414,7 @@ function delCustom(gid){
   regCustom();
 }
 var KEY='gymcoach-v1',RECK=['가슴','어깨','팔','코어','하체 앞','등','엉덩이','햄스트링'];
-function blank(){return {v:1,onboarded:false,settings:{freq:3,goal:'근력',caution:[],minutes:45},exp:'처음',gearOn:GEAR.map(function(g){return g.id}),prog:null,memos:{},extraGear:[],history:[],weights:{},nextDay:0,places:[{id:'p1',name:'내 헬스장'}],placeId:'p1',chinSplit:1}}
+function blank(){return {v:1,onboarded:false,settings:{freq:3,goal:'근력',caution:[],minutes:45},exp:'처음',gearOn:GEAR.map(function(g){return g.id}),prog:null,memos:{},extraGear:[],history:[],weights:{},nextDay:0,places:[{id:'p1',name:'내 헬스장'}],placeId:'p1',chinSplit:1,body:{h:null,log:[]}}}
 function load(){try{var t=localStorage.getItem(KEY);return t?JSON.parse(t):null}catch(e){return null}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요')}}
 var D=load();
@@ -404,7 +422,7 @@ if(!D||D.v!==1)D=blank();
 ensureData();regCustom();
 if(!D.prog)D.prog=generate(D.settings);
 var REC={};RECK.forEach(function(k){REC[k]=100});
-var S={tab:'today',screen:D.onboarded?'home':'onb',onb:0,time:'normal',cond:{sleep:4,sore:3,mood:3},voice:false,sets:[],cur:0,start:0,restEnd:0,restTotal:90,askFeel:false,pday:0,draft:null,newGear:{tab:'custom',nm:'',part:null,kg:true,err:''},np:{name:'',gym:null,touched:false},delGear:null,delPlace:null,addFilter:'전체',recView:'cal',gearCat:'하체',result:null,recEx:null,confirmReset:false};
+var S={tab:'today',screen:D.onboarded?'home':'onb',onb:0,time:'normal',cond:{sleep:4,sore:3,mood:3},voice:false,sets:[],cur:0,start:0,restEnd:0,restTotal:90,askFeel:false,pday:0,draft:null,newGear:{tab:'custom',nm:'',part:null,kg:true,err:''},np:{name:'',gym:null,touched:false},delGear:null,delPlace:null,bd:{d:'',kg:'',h:'',err:'',del:false},addFilter:'전체',recView:'cal',gearCat:'하체',result:null,recEx:null,confirmReset:false};
 if(!D.onboarded)S.od={settings:JSON.parse(JSON.stringify(D.settings)),exp:D.exp,gearOn:D.gearOn.slice()};
 var app=document.getElementById('app'),dock=document.getElementById('dock'),layer=document.getElementById('layer');
 
@@ -882,6 +900,11 @@ function vHome(){
   var h='<div class="scene">';
   h+='<div><div class="eyebrow">주 '+D.settings.freq+'회 · '+D.settings.goal+' · '+(D.history.length+1)+'번째 운동'+(adapting()?' · 적응 기간':'')+(D.places.length>1?' · '+esc(curPlace().name):'')+'</div><h1>'+dayLabel(now)+'</h1></div>';
   h+='<div class="week">'+['월','화','수','목','금','토','일'].map(function(d,i){var x=new Date(mon);x.setDate(mon.getDate()+i);var k=ymd(x),cls=doneDates[k]?'done':(k===tdy?'today':'');if(k===tdy&&doneDates[k])cls='today done';return '<button class="day '+cls+'" data-act="dayinfo" data-d="'+k+'" aria-label="'+(x.getMonth()+1)+'월 '+x.getDate()+'일 기록 보기"><span class="d">'+d+'</span><span class="n">'+x.getDate()+'</span><span class="m"></span></button>'}).join('')+'</div>';
+  var lb=lastBody(),bb=lb?bmiOf(lb.kg,D.body.h):null,bt;
+  if(!lb)bt='몸무게·키를 기록해요 <span class="faint">· BMI도 알려드려요</span>';
+  else if(lb.date===tdy)bt='오늘 <b class="num">'+fmtKg(lb.kg)+'kg</b>'+(bb?' · BMI '+bb.toFixed(1)+' <span style="color:'+bmiCol(bb)+'">'+bmiCat(bb)+'</span>':'');
+  else bt='오늘 몸무게 기록하기 <span class="faint">· 지난 기록 '+fmtKg(lb.kg)+'kg ('+daysAgo(lb.date)+'일 전)</span>';
+  h+='<button class="mrow" data-act="body" style="padding:10px 14px"><span class="small">'+bt+'</span><span class="chev">›</span></button>';
   h+='<div class="card grow" style="display:flex;flex-direction:column;gap:8px"><div class="row between"><h2>오늘은 '+t.name+'</h2><span class="tag acc">'+act.length+'가지 · 약 '+minutes(p)+'분</span></div>';
   h+='<div class="bodies grow">'+bodyArt('front',{rec:true})+bodyArt('back',{rec:true})+'</div>';
   h+='<div class="legend"><span><i class="dot" style="background:var(--good)"></i>회복됨</span><span><i class="dot" style="background:var(--warn)"></i>조금 피곤</span><span><i class="dot" style="background:var(--bad)"></i>쉬어야 함</span></div>';
@@ -1033,12 +1056,36 @@ function vDone(){
 }
 
 // ===== 기록 =====
+function recBody(){
+  var log=D.body.log,h='';
+  if(!log.length)return '<div class="grow" style="display:grid;place-items:center;text-align:center"><p class="muted">아직 몸무게 기록이 없어요.<br>하루에 한 번 적으면 변화를 볼 수 있어요.</p></div><button class="btn pri" data-act="body">오늘 몸무게 기록하기</button>';
+  var lb=lastBody(),b=bmiOf(lb.kg,D.body.h),wk=null,i;
+  for(i=log.length-2;i>=0;i--){if(daysAgo(log[i].date)-daysAgo(lb.date)>=7){wk=log[i];break}}
+  var ch=wk?lb.kg-wk.kg:null;
+  h+='<div class="row between"><div><div class="small muted">'+shortDate(lb.date)+' 최근</div><div><b class="num" style="font-size:30px">'+fmtKg(lb.kg)+'</b><span class="muted"> kg</span></div></div><div style="text-align:right">'+(b?'<div class="small muted">BMI</div><div><b class="num" style="font-size:22px">'+b.toFixed(1)+'</b> <span style="color:'+bmiCol(b)+';font-weight:600;font-size:13px">'+bmiCat(b)+'</span></div>':'<button class="link" data-act="body">키 적고 BMI 보기</button>')+'</div></div>';
+  h+='<p class="small muted">'+(ch!=null?'지난 기록(7일 이상 전)보다 '+(ch>0?'+':'')+fmtKg(ch)+'kg':'기록이 쌓이면 변화를 알려드려요')+'</p>';
+  var pts=log.slice(-30),W=300,H=130,lo=Math.min.apply(null,pts.map(function(x){return x.kg})),hi=Math.max.apply(null,pts.map(function(x){return x.kg}));
+  if(hi-lo<1){hi+=0.5;lo-=0.5}
+  var X=function(n){return pts.length===1?W/2:16+n*(W-32)/(pts.length-1)},Y=function(v){return H-18-(v-lo)/(hi-lo)*(H-40)};
+  h+='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto" role="img" aria-label="몸무게 변화">';
+  [lo,hi].forEach(function(v){var y=Y(v).toFixed(1);h+='<line x1="16" x2="'+(W-16)+'" y1="'+y+'" y2="'+y+'" stroke="var(--line)"/><text x="'+(W-14)+'" y="'+(y-3)+'" fill="var(--faint)" font-size="10" text-anchor="end">'+fmtKg(v)+'kg</text>'});
+  if(pts.length>1)h+='<path d="'+pts.map(function(x,n){return (n?'L':'M')+X(n).toFixed(1)+' '+Y(x.kg).toFixed(1)}).join('')+'" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>';
+  pts.forEach(function(x,n){h+='<circle cx="'+X(n).toFixed(1)+'" cy="'+Y(x.kg).toFixed(1)+'" r="'+(n===pts.length-1?4.5:2.5)+'" fill="var(--accent)"/>'});
+  h+='<text x="16" y="'+(H-2)+'" fill="var(--faint)" font-size="10">'+shortDate(pts[0].date)+'</text><text x="'+(W-16)+'" y="'+(H-2)+'" fill="var(--faint)" font-size="10" text-anchor="end">'+shortDate(pts[pts.length-1].date)+'</text></svg>';
+  h+='<div class="grow scroll"><div class="list">';
+  log.slice(-14).reverse().forEach(function(x){
+    var k=log.indexOf(x),pv=k>0?log[k-1]:null,df=pv?x.kg-pv.kg:null;
+    h+='<button class="item" data-act="body" data-d="'+x.date+'" style="grid-template-columns:1fr auto auto"><span><span class="nm">'+shortDate(x.date)+'</span></span><span class="num"><b>'+fmtKg(x.kg)+'</b> kg</span><span class="small num" style="min-width:48px;text-align:right;color:var(--muted)">'+(df==null||Math.abs(df)<0.05?'':(df>0?'+':'')+fmtKg(df))+'</span></button>';
+  });
+  h+='</div></div><button class="btn pri" data-act="body">'+(lb.date===ymd()?'오늘 몸무게 고치기':'오늘 몸무게 기록하기')+'</button>';
+  return h;
+}
 function vRecords(){
   var h='<div class="scene"><h1>기록</h1>';
-  h+='<div class="seg">'+[['cal','달력'],['part','부위별'],['weight','무게 변화']].map(function(x){return '<button data-act="recv" data-k="'+x[0]+'" aria-pressed="'+(S.recView===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>';
+  h+='<div class="seg">'+[['cal','달력'],['part','부위별'],['weight','운동 무게'],['body','몸무게']].map(function(x){return '<button data-act="recv" data-k="'+x[0]+'" aria-pressed="'+(S.recView===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>';
   h+='<div class="card grow" style="display:flex;flex-direction:column;gap:12px">';
   var now=new Date();
-  if(!D.history.length){h+='<div class="grow" style="display:grid;place-items:center;text-align:center"><p class="muted">아직 기록이 없어요.<br>첫 운동을 마치면 여기에 쌓여요.</p></div>';return h+'</div></div>'}
+  if(!D.history.length&&S.recView!=='body'){h+='<div class="grow" style="display:grid;place-items:center;text-align:center"><p class="muted">아직 기록이 없어요.<br>첫 운동을 마치면 여기에 쌓여요.</p></div>';return h+'</div></div>'}
   if(S.recView==='cal'){
     var y=now.getFullYear(),m=now.getMonth(),first=new Date(y,m,1),days=new Date(y,m+1,0).getDate(),pad=(first.getDay()+6)%7,set={},cnt=0;
     D.history.forEach(function(s){if(s.date.slice(0,7)===ymd(first).slice(0,7)){if(!set[s.date])cnt++;set[s.date]=1}});
@@ -1053,6 +1100,8 @@ function vRecords(){
     h+='<div class="row between"><h2>이번 주 부위별 세트</h2><span class="small muted">목표 대비</span></div><div class="bars">';
     var low=[];RECK.forEach(function(k){var goal=BIG[k]?(D.settings.freq>=3?9:6):6;if(cnt2[k]<goal/2)low.push(k);h+='<div class="bar"><span>'+k+'</span><span class="track"><i style="width:'+Math.min(100,cnt2[k]/goal*100)+'%"></i></span><span class="v num">'+cnt2[k]+'/'+goal+'</span></div>'});
     h+='</div><p class="small muted">'+(low.length?low.join('·')+' 세트가 아직 적어요.':'이번 주 골고루 잘하고 있어요.')+'</p>';
+  }else if(S.recView==='body'){
+    h+=recBody();
   }else{
     var exs={};D.history.forEach(function(s){s.sets.forEach(function(x){var e=LIB[x.id];if(x.kind==='main'&&e&&e.step&&!e.assist)exs[x.id]=1})});
     var ids=Object.keys(exs);if(!ids.length){h+='<p class="muted">무게를 쓰는 운동 기록이 아직 없어요.</p>';return h+'</div></div>'}
@@ -1075,14 +1124,29 @@ function vRecords(){
 function vMe(){
   var h='<div class="scene"><h1>내 정보</h1><div class="menu">';
   h+='<button class="mrow" data-act="go" data-s="prog" data-from="me"><span><span class="nm">내 프로그램</span><br><span class="meta">'+D.prog.map(function(x){return x.name}).join(' · ')+' · 주 '+D.settings.freq+'회 · '+D.settings.minutes+'분</span></span><span class="chev">›</span></button>';
+  var lb2=lastBody(),bb2=lb2?bmiOf(lb2.kg,D.body.h):null;
+  h+='<button class="mrow" data-act="body"><span><span class="nm">몸무게 · 키 · BMI</span><br><span class="meta">'+(lb2?'최근 '+fmtKg(lb2.kg)+'kg'+(bb2?' · BMI '+bb2.toFixed(1)+' '+bmiCat(bb2):''):'매일 기록하고 변화를 볼 수 있어요')+'</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="places"><span><span class="nm">운동 장소</span><br><span class="meta">'+esc(curPlace().name)+(D.places.length>1?' 외 '+(D.places.length-1)+'곳':' · 집이나 다른 헬스장도 따로 저장해요')+'</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="go" data-s="gear"><span><span class="nm">'+esc(curPlace().name)+' 기구</span><br><span class="meta">'+D.gearOn.length+'개 사용 · 내 기구 '+D.extraGear.filter(function(g){return !g.gone}).length+'개 · 세팅 메모 '+Object.keys(D.memos).length+'개</span></span><span class="chev">›</span></button>';
   h+='<button class="mrow" data-act="data"><span><span class="nm">내 데이터 · 백업</span><br><span class="meta">운동 '+D.history.length+'회 기록 · 이 폰 안에만 저장돼요</span></span><span class="chev">›</span></button>';
-  return h+'</div><p class="small faint" style="margin-top:auto;text-align:center">짐코치 테스트 버전 0.1.8</p></div>';
+  return h+'</div><p class="small faint" style="margin-top:auto;text-align:center">짐코치 테스트 버전 0.1.9</p></div>';
+}
+function sheetBody(){
+  var b=S.bd,ex=bodyOn(b.d);
+  var h='<h2>몸무게 기록</h2>';
+  h+='<div class="row between"><h3>날짜</h3><input type="date" class="field" data-bdate="1" max="'+ymd()+'" value="'+b.d+'" style="width:auto"></div>';
+  h+='<div><h3 style="margin-bottom:6px">몸무게 (kg)</h3><div class="row" style="gap:8px"><button class="pill" data-act="bw" data-d="-0.1" style="padding:14px 12px" aria-label="0.1킬로 줄이기">−0.1</button><input class="field num" data-bw="1" inputmode="decimal" autocomplete="off" placeholder="예: 65.5" value="'+esc(b.kg)+'" style="text-align:center;font-size:24px;font-weight:700"><button class="pill" data-act="bw" data-d="0.1" style="padding:14px 12px" aria-label="0.1킬로 늘리기">+0.1</button></div></div>';
+  h+='<div><h3 style="margin-bottom:6px">키 (cm) <span class="small faint" style="font-weight:400">한 번만 적으면 돼요</span></h3><input class="field num" data-bh="1" inputmode="numeric" autocomplete="off" placeholder="예: 170" value="'+esc(b.h)+'"></div>';
+  h+='<div class="card" id="bmi-box">'+bmiBox(parseNum(b.kg),parseNum(b.h))+'</div>';
+  h+='<p class="small" id="bmsg" style="color:var(--warn)">'+esc(b.err||'')+'</p>';
+  h+='<button class="btn pri" data-act="bsave">'+(ex?'고쳐서 저장':'저장')+'</button>';
+  if(ex)h+=b.del?'<div class="notice">'+shortDate(b.d)+' 몸무게 기록을 지울까요?</div><div class="btns"><button class="btn sec sm" data-act="bdelno">취소</button><button class="btn sm" style="background:var(--bad);color:#fff" data-act="bdelyes">지우기</button></div>':'<button class="btn ghost sm" style="color:var(--bad)" data-act="bdel">이 날 기록 지우기</button>';
+  return h+'<button class="btn ghost" data-act="close">닫기</button>';
 }
 function sheetDay(k){
   var p=k.split('-'),dt=new Date(+p[0],+p[1]-1,+p[2]),ss=D.history.filter(function(x){return x.date===k});
-  var h='<h2>'+dayLabel(dt)+'</h2>';
+  var h='<h2>'+dayLabel(dt)+'</h2>',bw=bodyOn(k);
+  if(bw)h+='<p class="small muted">몸무게 <b class="num">'+fmtKg(bw.kg)+'kg</b></p>';
   if(!ss.length){
     h+='<p class="muted">'+(k>ymd()?'아직 오지 않은 날이에요.':k===ymd()?'오늘은 아직 운동 기록이 없어요. "오늘" 탭에서 시작해요.':'이 날은 운동 기록이 없어요.')+'</p>';
     return h+'<button class="btn sec" data-act="close">닫기</button>';
@@ -1303,6 +1367,20 @@ document.addEventListener('click',function(ev){
   else if(a==='gdel'){S.delGear=t.dataset.g;openSheet(sheetGear(t.dataset.g))}
   else if(a==='gdelno'){S.delGear=null;openSheet(sheetGear(t.dataset.g))}
   else if(a==='gdelyes'){var dn=GMAP[t.dataset.g]?GMAP[t.dataset.g].n:'기구';delCustom(t.dataset.g);S.delGear=null;save();closeSheet();render();toast(dn+'을(를) 삭제했어요')}
+  else if(a==='body'){var bd0=t.dataset.d||ymd(),be=bodyOn(bd0),lb3=lastBody();S.bd={d:bd0,kg:be?fmtKg(be.kg):(lb3?fmtKg(lb3.kg):''),h:D.body.h?String(D.body.h):'',err:'',del:false};openSheet(sheetBody())}
+  else if(a==='bw'){var cur=parseNum(S.bd.kg);if(cur==null)cur=60;S.bd.kg=fmtKg(Math.min(300,Math.max(20,cur+(+t.dataset.d))));S.bd.err='';openSheet(sheetBody())}
+  else if(a==='bsave'){
+    var kg=parseNum(S.bd.kg),hh=S.bd.h.trim()?parseNum(S.bd.h):null;
+    if(kg==null||kg<20||kg>300){S.bd.err='몸무게를 20~300kg 사이로 적어주세요';openSheet(sheetBody());return}
+    if(S.bd.h.trim()&&(hh==null||hh<100||hh>250)){S.bd.err='키를 100~250cm 사이로 적어주세요';openSheet(sheetBody());return}
+    kg=Math.round(kg*10)/10;if(hh!=null)D.body.h=Math.round(hh);
+    var bx=bodyOn(S.bd.d);if(bx)bx.kg=kg;else D.body.log.push({date:S.bd.d,kg:kg});
+    D.body.log.sort(function(x,y){return x.date<y.date?-1:x.date>y.date?1:0});
+    save();closeSheet();render();var bi=bmiOf(kg,D.body.h);toast(fmtKg(kg)+'kg 기록했어요'+(bi?' · BMI '+bi.toFixed(1)+' '+bmiCat(bi):''));
+  }
+  else if(a==='bdel'){S.bd.del=true;openSheet(sheetBody())}
+  else if(a==='bdelno'){S.bd.del=false;openSheet(sheetBody())}
+  else if(a==='bdelyes'){D.body.log=D.body.log.filter(function(x){return x.date!==S.bd.d});save();closeSheet();render();toast('기록을 지웠어요')}
   else if(a==='dayinfo'){openSheet(sheetDay(t.dataset.d))}
   else if(a==='places'){S.delPlace=null;openSheet(sheetPlaces())}
   else if(a==='prename'){var pi2=document.getElementById('f-pname'),pv=(pi2&&pi2.value||'').trim().slice(0,16);if(!pv)return;if(D.places.some(function(x){return x.id!==D.placeId&&x.name===pv})){toast('같은 이름의 장소가 있어요');return}curPlace().name=pv;save();openSheet(sheetPlaces());render();toast('이름을 바꿨어요')}
@@ -1344,11 +1422,14 @@ document.addEventListener('click',function(ev){
   else if(a==='close'){closeSheet()}
   else if(a==='toast'){toast(t.dataset.msg)}
 });
-document.addEventListener('change',function(ev){var inp=ev.target;if(!inp.dataset||!inp.dataset.slot||!inp.files||!inp.files[0])return;
+document.addEventListener('change',function(ev){var inp=ev.target;
+  if(inp.dataset&&inp.dataset.bdate){if(!inp.value||inp.value>ymd())return;S.bd.d=inp.value;var be2=bodyOn(inp.value);if(be2)S.bd.kg=fmtKg(be2.kg);S.bd.del=false;S.bd.err='';openSheet(sheetBody());return}
+if(!inp.dataset||!inp.dataset.slot||!inp.files||!inp.files[0])return;
   if(inp.dataset.slot==='import'){var fr=new FileReader();fr.onload=function(){try{var o=JSON.parse(fr.result);if(!o||o.v!==1||!Array.isArray(o.history))throw 0;D=o;ensureData();regCustom();if(!Array.isArray(D.prog))D.prog=generate(D.settings);save();closeSheet();S.screen='home';S.tab='today';render();toast('백업을 불러왔어요 · 운동 '+D.history.length+'회')}catch(e){toast('짐코치 백업 파일이 아니에요')}};fr.readAsText(inp.files[0]);return}
   });
 document.addEventListener('input',function(ev){var el=ev.target;
   if(el.dataset&&el.dataset.gname){S.newGear.nm=el.value;S.newGear.err='';var gb=document.getElementById('gsave');if(gb){var rdy=!!(S.newGear.nm.trim()&&S.newGear.part);gb.disabled=!rdy;gb.textContent=rdy?'내 기구로 추가':'이름과 부위를 정해주세요'}var gm=document.getElementById('gmsg');if(gm)gm.textContent='';return}
+  if(el.dataset&&(el.dataset.bw||el.dataset.bh)){if(el.dataset.bw)S.bd.kg=el.value;else S.bd.h=el.value;S.bd.err='';var bm=document.getElementById('bmi-box');if(bm)bm.innerHTML=bmiBox(parseNum(S.bd.kg),parseNum(S.bd.h));var bg=document.getElementById('bmsg');if(bg)bg.textContent='';return}
   if(el.dataset&&el.dataset.pname){S.np.name=el.value;S.np.touched=true;var pb=document.getElementById('npsave');if(pb)pb.disabled=!(S.np.gym&&S.np.name.trim());return}
   if(!el.dataset||!el.dataset.etc)return;var st=el.dataset.etc==='od'?S.od.settings:S.draft;st.cautionEtc=el.value;var m=document.getElementById('etc-rec-'+el.dataset.etc);if(m){m.textContent=etcMsg(st);m.style.color=cauEtcTags(st).length?'var(--info)':'var(--faint)'}});
 document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&layer.innerHTML)closeSheet()});
